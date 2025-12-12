@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<h2>Inscription</h2>
+<form method="post">
+    CIN : <input type="text" name="cin" required><br>
+    Nom : <input type="text" name="nom" required><br>
+    Prénoms : <input type="text" name="prenoms" required><br>
+    Email : <input type="email" name="email" required><br>
+    Mot de passe : <input type="password" name="password" required><br>
+    Répéter le mot de passe : <input type="password" name="password2" required><br>
+    Fonction : 
+    <select name="fonction" required>
+        <option value="Directeur">Directeur</option>
+        <option value="Secretaire">Secrétaire</option>
+        <option value="Tresorie">Trésorie</option>
+    </select><br>
+    <button type="submit">S'inscrire</button>
+</form>
+<p>Déjà inscrit ? <a href="{{ url_for('auth.login') }}">Se connecter</a></p>
+{% endblock %}

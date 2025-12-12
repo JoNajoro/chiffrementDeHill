@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block content %}
+<h2>Page d'accueil</h2>
+<p>Bienvenue {{ session.user.prenoms }} {{ session.user.nom }} !</p>
+<p>Fonction : {{ session.user.fonction }}</p>
+<a href="{{ url_for('auth.logout') }}">Déconnexion</a>
+{% endblock %}

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Bienvenue, {{ session['user']['prenoms'] }} {{ session['user']['nom'] }}!</h1>
+    <p>CIN: {{ session['user']['cin'] }}</p>
+    <p>Email: {{ session['user']['email'] }}</p>
+    <p>Fonction: {{ session['user']['fonction'] }}</p>
+    <a href="{{ url_for('main.list_users') }}">Liste des utilisateurs</a>
+    <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
+</body>
+</html>
