@@ -5,11 +5,12 @@ class MessageModel:
     collection = db['messages']
 
     @staticmethod
-    def send_message(sender_email, receiver_email, message_content):
+    def send_message(sender_email, receiver_email, message_content, is_encrypted=False):
         message = {
             "sender_email": sender_email,
             "receiver_email": receiver_email,
             "message_content": message_content,
+            "is_encrypted": is_encrypted,
             "timestamp": datetime.now()
         }
         MessageModel.collection.insert_one(message)

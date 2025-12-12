@@ -37,60 +37,7 @@
 
     <br><br>
 
-   <div>
-       <label for="difficulty">Niveau de difficulté :</label>
-       <select id="difficulty">
-           <option value="5">Facile</option>
-           <option value="15">Moyen</option>
-           <option value="50">Difficile</option>
-       </select>
-       <button onclick="generateKey()">Générer clé</button>
-   </div>
-   <div id="keyDisplay" style="margin-top: 10px;"></div>
-
-    <br><br>
-
     <a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
     
-    <script>
-        function generateKey() {
-            const difficulty = document.getElementById('difficulty').value;
-            const size = parseInt(difficulty);
-            
-            // Générer une matrice carrée aléatoire
-            const matrix = [];
-            for (let i = 0; i < size; i++) {
-                const row = [];
-                for (let j = 0; j < size; j++) {
-                    row.push(Math.floor(Math.random() * 256));
-                }
-                matrix.push(row);
-            }
-            
-            // Convertir la matrice en bytes
-            const matrixBytes = new Uint8Array(size * size);
-            for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {
-                    matrixBytes[i * size + j] = matrix[i][j];
-                }
-            }
-            
-            // Encoder en Base64
-            const base64Key = btoa(String.fromCharCode.apply(null, matrixBytes));
-            
-            // Afficher la clé
-            document.getElementById('keyDisplay').innerHTML =
-                `<strong>Clé générée (Base64) :</strong> ${base64Key}<br>
-                 <button onclick="copyKey('${base64Key}')">Copier la clé</button>`;
-        }
-        
-        function copyKey(key) {
-            navigator.clipboard.writeText(key).then(() => {
-                alert('Clé copiée dans le presse-papiers !');
-            }).catch(err => {
-                console.error('Erreur lors de la copie: ', err);
-            });
-        }
-    </script>
 </body>
 </html>
