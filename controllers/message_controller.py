@@ -132,12 +132,27 @@ def get_stored_key():
         sender_email = session['user']['email']
         # Get the stored key from the KeyModel
         stored_key = KeyModel.get_key(sender_email, receiver_email)
-        
+         
         if stored_key:
             return jsonify({"success": True, "key": stored_key})
         else:
             return jsonify({"success": False, "error": "Aucune clé stockée trouvée pour cette paire d'utilisateurs."})
     except Exception as e:
         return jsonify({"success": False, "error": f"Erreur lors de la récupération de la clé: {str(e)}"})
+
+
+@message_bp.route('/get_all_stored_keys', methods=['GET'])
+def get_all_stored_keys():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    try:
+        user_email = session['user']['email']
+        # Get all keys for the user from the KeyModel
+        keys = KeyModel.get_all_keys_for_user(user_email)
+        
+        return jsonify({"success": True, "keys": keys})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Erreur lors de la récupération des clés: {str(e)}"})
     
     

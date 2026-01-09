@@ -25,8 +25,7 @@ class KeyModel:
         key_document = {
             "user1_email": users[0],
             "user2_email": users[1],
-            "hashed_key": hashed_key,
-            "key": key  # Store the unhashed key as well
+            "hashed_key": hashed_key
         }
         
         # Insert or update the key document
@@ -44,7 +43,7 @@ class KeyModel:
     @staticmethod
     def get_key(user1_email, user2_email):
         """
-        Retrieve the unhashed encryption key for a pair of users.
+        Retrieve the hashed encryption key for a pair of users.
         """
         # Ensure the users are ordered to avoid duplicate entries
         users = sorted([user1_email, user2_email])
@@ -57,7 +56,7 @@ class KeyModel:
         )
         
         if key_document:
-            return key_document["key"]  # Return the unhashed key
+            return key_document["hashed_key"]  # Return the hashed key
         else:
             return None
 
@@ -73,3 +72,29 @@ class KeyModel:
             return hashed_key == stored_hashed_key
         else:
             return False
+
+    @staticmethod
+    def get_all_keys_for_user(user_email):
+        """
+        Retrieve all keys associated with a specific user.
+        """
+        keys = []
+        
+        # Find all keys where the user is either user1 or user2
+        key_documents = KeyModel.collection.find({
+            "$or": [
+                {"user1_email": user_email},
+                {"user2_email": user_email}
+            ]
+        })
+        
+        for doc in key_documents:
+            # Determine the receiver email (the other user in the pair)
+            receiver_email = doc["user2_email"] if doc["user1_email"] == user_email else doc["user1_email"]
+            
+            keys.append({
+                "receiver_email": receiver_email,
+                "key": doc["hashed_key"]
+            })
+        
+        return keys
