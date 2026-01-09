@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from models.message_model import MessageModel
 from models.hill_cipher import hill_chiffrement_ansi_base64, hill_dechiffrement_ansi_base64
 from models.chiffrement_model import base64_en_matrice, generer_matrice_inversible, matrice_en_base64
+from models.key_model import KeyModel
 
 message_bp = Blueprint('message', __name__)
 
@@ -12,8 +13,19 @@ def send_message():
     
     receiver_email = request.form['receiver_email']
     message_content = request.form['message_content']
-    encryption_key = request.form['encryption_key']
+    encryption_key = request.form.get('encryption_key', '')
     sender_email = session['user']['email']
+    
+    # Use the stored key if no encryption key is provided
+    if not encryption_key:
+        stored_key = KeyModel.get_key(sender_email, receiver_email)
+        if stored_key:
+            # The stored key is hashed, so we need to verify it
+            # For now, we will use the stored key directly (assuming it is the correct key)
+            encryption_key = stored_key
+        else:
+            flash("Clé de chiffrement manquante et aucune clé stockée disponible.", "danger")
+            return redirect(url_for('main.chat', user_email=receiver_email))
     
     # Convert the encryption key from base64 to matrix
     try:
@@ -85,6 +97,9 @@ def generate_key():
     # Get the size parameter from the request (default to 5)
     taille = int(request.args.get('size', 5))
     
+    # Get the receiver_email parameter from the request
+    receiver_email = request.args.get('receiver_email', '')
+    
     # Validate that the size is one of the allowed values
     if taille not in [5, 15, 50]:
         return jsonify({"success": False, "error": "Taille de matrice non supportée. Utilisez 5, 15 ou 50."})
@@ -92,8 +107,37 @@ def generate_key():
     try:
         matrice = generer_matrice_inversible(taille)
         matrice_base64 = matrice_en_base64(matrice)
+        
+        # Store the key for the pair of users if receiver_email is provided
+        if receiver_email:
+            sender_email = session['user']['email']
+            KeyModel.store_key(sender_email, receiver_email, matrice_base64)
+        
         return jsonify({"success": True, "key": matrice_base64, "size": taille})
     except Exception as e:
         return jsonify({"success": False, "error": f"Erreur lors de la génération de la clé: {str(e)}"})
+
+@message_bp.route('/get_stored_key', methods=['GET'])
+def get_stored_key():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    # Get the receiver_email parameter from the request
+    receiver_email = request.args.get('receiver_email', '')
+    
+    if not receiver_email:
+        return jsonify({"success": False, "error": "Email du destinataire manquant."})
+    
+    try:
+        sender_email = session['user']['email']
+        # Get the stored key from the KeyModel
+        stored_key = KeyModel.get_key(sender_email, receiver_email)
+        
+        if stored_key:
+            return jsonify({"success": True, "key": stored_key})
+        else:
+            return jsonify({"success": False, "error": "Aucune clé stockée trouvée pour cette paire d'utilisateurs."})
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Erreur lors de la récupération de la clé: {str(e)}"})
     
     

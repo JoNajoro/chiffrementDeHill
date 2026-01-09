@@ -28,7 +28,10 @@
                 <td>{{ user['prenoms'] }}</td>
                 <td>{{ user['email'] }}</td>
                 <td>{{ user['fonction'] }}</td>
-                <td><a href="{{ url_for('main.chat', user_email=user['email']) }}">Discuter</a></td>
+                <td>
+                    <a href="{{ url_for('main.chat', user_email=user['email']) }}">Discuter</a>
+                    <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" style="margin-left: 10px;">Voir la clé</a>
+                </td>
             </tr>
             {% endif %}
             {% endfor %}
