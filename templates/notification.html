@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boîte de Notifications</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .notification-box {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .notification-box:hover {
+            background-color: #e9e9e9;
+        }
+        .notification-unread {
+            border-left: 4px solid #007bff;
+            background-color: #f0f8ff;
+        }
+        .notification-read {
+            border-left: 4px solid #6c757d;
+            background-color: #f8f9fa;
+        }
+        .notification-sender {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .notification-key {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+            display: inline-block;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .notification-key-hidden {
+            font-family: monospace;
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+            display: inline-block;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .key-actions {
+            display: inline-flex;
+            gap: 5px;
+            margin-left: 10px;
+        }
+        .key-actions button {
+            padding: 2px 5px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Boîte de Notifications</h2>
+        <div class="card">
+            <div class="card-body">
+                <div id="notifications-list">
+                    <!-- Les notifications seront ajoutées dynamiquement ici -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Fonction pour récupérer les notifications depuis le backend
+        async function fetchNotifications() {
+            try {
+                const response = await fetch('/get_notifications');
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.notifications;
+                } else {
+                    console.error('Échec de la récupération des notifications:', data.error);
+                    return [];
+                }
+            } catch (error) {
+                console.error('Erreur lors de la récupération des notifications:', error);
+                return [];
+            }
+        }
+        
+        // Fonction pour afficher les notifications
+        async function displayNotifications() {
+            const notifications = await fetchNotifications();
+            const notificationsList = document.getElementById('notifications-list');
+            notificationsList.innerHTML = '';
+            
+            if (notifications.length === 0) {
+                notificationsList.innerHTML = '<p class="text-center text-muted">Aucune notification pour le moment.</p>';
+                return;
+            }
+            
+            notifications.forEach(notification => {
+                const notificationBox = document.createElement('div');
+                notificationBox.className = `notification-box ${notification.is_read ? 'notification-read' : 'notification-unread'}`;
+                notificationBox.onclick = function() {
+                    // Redirection vers la page de chat avec l'utilisateur concerné
+                    window.location.href = `/chat?user_email=${notification.sender}`;
+                };
+                
+                // Créer un ID unique pour chaque notification
+                const notificationId = `notification-${Math.random().toString(36).substr(2, 9)}`;
+                
+                // Utiliser la clé originale si disponible, sinon utiliser la clé hachée
+                const keyToDisplay = notification.original_key || notification.key;
+                const keyLabel = notification.original_key ? "Clé originale" : "Clé hachée";
+                
+                notificationBox.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="notification-sender">${notification.sender}</span>
+                            vous a envoyé un message avec la ${keyLabel} :
+                            <span class="notification-key-hidden" id="${notificationId}-hidden">********</span>
+                            <span class="notification-key" id="${notificationId}-visible" style="display: none;">${keyToDisplay}</span>
+                            <div class="key-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showKey('${notificationId}')">Afficher</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="event.stopPropagation(); copyKey('${keyToDisplay}')">Copier</button>
+                            </div>
+                            <div class="text-muted small">${notification.timestamp}</div>
+                        </div>
+                        <div>
+                            ${notification.is_read ? '<span class="badge badge-secondary">Lu</span>' : '<span class="badge badge-primary">Nouveau</span>'}
+                            <i class="fas fa-chevron-right text-muted ml-2"></i>
+                        </div>
+                    </div>
+                `;
+                notificationsList.appendChild(notificationBox);
+            });
+        }
+        
+        // Fonction pour afficher la clé
+        function showKey(notificationId) {
+            const hiddenKey = document.getElementById(`${notificationId}-hidden`);
+            const visibleKey = document.getElementById(`${notificationId}-visible`);
+            
+            if (hiddenKey && visibleKey) {
+                hiddenKey.style.display = 'none';
+                visibleKey.style.display = 'inline-block';
+            }
+        }
+        
+        // Fonction pour copier la clé dans le presse-papiers
+        function copyKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                alert('Clé copiée dans le presse-papiers !');
+            }).catch(err => {
+                console.error('Échec de la copie de la clé: ', err);
+            });
+        }
+        
+        // Afficher les notifications lorsque la page est chargée
+        window.onload = displayNotifications;
+    </script>
+</body>
+</html>

@@ -3,6 +3,7 @@ from models.message_model import MessageModel
 from models.hill_cipher import hill_chiffrement_ansi_base64, hill_dechiffrement_ansi_base64
 from models.chiffrement_model import base64_en_matrice, generer_matrice_inversible, matrice_en_base64
 from models.key_model import KeyModel
+from models.notification_model import NotificationModel
 
 message_bp = Blueprint('message', __name__)
 
@@ -43,6 +44,10 @@ def send_message():
     
     success, msg = MessageModel.send_message(sender_email, receiver_email, encrypted_message, is_encrypted=True)
     flash(msg, "success" if success else "danger")
+    
+    # Create a notification with the real key used
+    NotificationModel.create_notification(sender_email, receiver_email, encryption_key)
+    
     return redirect(url_for('main.chat', user_email=receiver_email))
 
 @message_bp.route('/get_messages/<user_email>')
@@ -154,5 +159,39 @@ def get_all_stored_keys():
         return jsonify({"success": True, "keys": keys})
     except Exception as e:
         return jsonify({"success": False, "error": f"Erreur lors de la récupération des clés: {str(e)}"})
+
+
+@message_bp.route('/notifications')
+def notifications():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    return render_template('notification.html')
+
+
+@message_bp.route('/get_notifications', methods=['GET'])
+def get_notifications():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    # Récupérer les notifications réelles pour l'utilisateur actuel
+    user_email = session['user']['email']
+    notifications = NotificationModel.get_notifications_for_user(user_email)
+    
+    # Formater les notifications pour l'affichage
+    formatted_notifications = []
+    for notification in notifications:
+        # Récupérer la clé originale depuis le modèle de clé
+        original_key = NotificationModel.get_original_key(notification["sender_email"], user_email)
+        
+        formatted_notification = {
+            "sender": notification["sender_email"],
+            "key": original_key or notification["key_used"],  # Afficher la clé originale si disponible, sinon la clé hachée
+            "timestamp": notification["timestamp"].strftime('%Y-%m-%d %H:%M:%S'),
+            "is_read": notification["is_read"]
+        }
+        formatted_notifications.append(formatted_notification)
+    
+    return jsonify({"success": True, "notifications": formatted_notifications})
     
     
