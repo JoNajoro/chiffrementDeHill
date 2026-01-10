@@ -27,6 +27,11 @@ class UserModel:
         return True, "Utilisateur enregistré avec succès."
 
     @staticmethod
+    def get_user_by_email(email):
+        """Récupère un utilisateur par son email."""
+        return UserModel.collection.find_one({"email": email})
+
+    @staticmethod
     def login(email, password):
         user = UserModel.collection.find_one({"email": email})
         if user and check_password_hash(user["password"], password):

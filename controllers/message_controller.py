@@ -4,6 +4,8 @@ from models.hill_cipher import hill_chiffrement_ansi_base64, hill_dechiffrement_
 from models.chiffrement_model import base64_en_matrice, generer_matrice_inversible, matrice_en_base64
 from models.key_model import KeyModel
 from models.notification_model import NotificationModel
+from models.user_model import UserModel
+from werkzeug.security import check_password_hash
 
 message_bp = Blueprint('message', __name__)
 
@@ -193,5 +195,37 @@ def get_notifications():
         formatted_notifications.append(formatted_notification)
     
     return jsonify({"success": True, "notifications": formatted_notifications})
+
+@message_bp.route('/verify_password', methods=['POST'])
+def verify_password():
+    """
+    Vérifie le mot de passe de l'utilisateur pour autoriser l'affichage des clés.
+    """
+    if 'user' not in session:
+        return jsonify({"success": False, "error": "Utilisateur non connecté"})
+    
+    try:
+        data = request.get_json()
+        password = data.get('password', '')
+        
+        if not password:
+            return jsonify({"success": False, "error": "Mot de passe requis"})
+        
+        # Récupérer l'utilisateur actuel
+        user_email = session['user']['email']
+        user = UserModel.get_user_by_email(user_email)
+        
+        if not user:
+            return jsonify({"success": False, "error": "Utilisateur non trouvé"})
+        
+        # Vérifier le mot de passe en utilisant le hash sécurisé
+        if check_password_hash(user["password"], password):
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Mot de passe incorrect"})
+            
+    except Exception as e:
+        print(f"Erreur lors de la vérification du mot de passe: {str(e)}")
+        return jsonify({"success": False, "error": "Erreur serveur lors de la vérification du mot de passe"})
     
     
