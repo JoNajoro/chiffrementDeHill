@@ -12,7 +12,7 @@
             padding: 15px;
             margin-bottom: 10px;
             background-color: #f9f9f9;
-            cursor: pointer;
+            cursor: default;
             transition: background-color 0.3s;
         }
         .notification-box:hover {
@@ -143,10 +143,7 @@
             notifications.forEach(notification => {
                 const notificationBox = document.createElement('div');
                 notificationBox.className = `notification-box ${notification.is_read ? 'notification-read' : 'notification-unread'}`;
-                notificationBox.onclick = function() {
-                    // Redirection vers la page de chat avec l'utilisateur concerné
-                    window.location.href = `/chat?user_email=${notification.sender}`;
-                };
+                // Suppression du onclick sur la notification entière pour éviter les conflits
                 
                 // Créer un ID unique pour chaque notification
                 const notificationId = `notification-${Math.random().toString(36).substr(2, 9)}`;
@@ -165,6 +162,7 @@
                             <div class="key-actions">
                                 <button class="btn btn-sm btn-outline-primary toggle-key-btn" data-notification-id="${notificationId}" onclick="event.stopPropagation(); showPasswordModal('${notificationId}', '${keyToDisplay}')">Afficher</button>
                                 <button class="btn btn-sm btn-outline-secondary copy-key-btn" data-notification-id="${notificationId}" data-key="${keyToDisplay}" onclick="event.stopPropagation(); copyKey('${keyToDisplay}')" disabled>Copier</button>
+                                <button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); goToChat('${notification.sender}')">Aller vers la discussion</button>
                             </div>
                             <div class="text-muted small">${notification.timestamp}</div>
                         </div>
@@ -279,6 +277,16 @@
                     copyButton.disabled = true;
                 }
             }
+        }
+        
+        // Fonction pour rediriger vers la page de chat (même implémentation que le bouton "Discuter")
+        function goToChat(senderEmail) {
+            // Générer l'URL de la même manière que url_for('main.chat', user_email=senderEmail)
+            // La route est définie comme /chat/<user_email>, donc nous utilisons ce format
+            // Encoder l'email pour gérer les caractères spéciaux comme @, +, etc.
+            const encodedEmail = encodeURIComponent(senderEmail);
+            window.location.href = `/chat/${encodedEmail}`;
+            console.log(`Redirection vers /chat/${encodedEmail}`); // Pour le débogage
         }
         
         // Fonction pour copier la clé dans le presse-papiers
