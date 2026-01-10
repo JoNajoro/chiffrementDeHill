@@ -181,12 +181,12 @@ def get_notifications():
     # Formater les notifications pour l'affichage
     formatted_notifications = []
     for notification in notifications:
-        # Récupérer la clé originale depuis le modèle de clé
-        original_key = NotificationModel.get_original_key(notification["sender_email"], user_email)
+        # Utiliser la clé originale inversée depuis la notification
+        original_key = notification.get("original_key", notification["key_used"][::-1])
         
         formatted_notification = {
             "sender": notification["sender_email"],
-            "key": original_key or notification["key_used"],  # Afficher la clé originale si disponible, sinon la clé hachée
+            "key": original_key,  # Afficher la clé originale
             "timestamp": notification["timestamp"].strftime('%Y-%m-%d %H:%M:%S'),
             "is_read": notification["is_read"]
         }

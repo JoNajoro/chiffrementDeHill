@@ -6,7 +6,7 @@ class NotificationModel:
     @staticmethod
     def create_notification(sender_email, receiver_email, key_used):
         """
-        Crée une notification pour le destinataire avec la clé utilisée (hachée uniquement).
+        Crée une notification pour le destinataire avec la clé utilisée (en mode droite-vers-gauche).
         
         Args:
             sender_email (str): Email de l'expéditeur.
@@ -17,13 +17,13 @@ class NotificationModel:
             bool: True si la notification a été créée avec succès, False sinon.
         """
         try:
-            # Hacher la clé pour des raisons de sécurité
-            hashed_key = hashlib.sha256(key_used.encode()).hexdigest()
+            # Stocker la clé en mode droite-vers-gauche (inversé)
+            reversed_key = key_used[::-1]
             
             notification = {
                 "sender_email": sender_email,
                 "receiver_email": receiver_email,
-                "key_used": hashed_key,  # Seule la clé hachée est stockée
+                "key_used": reversed_key,  # Clé stockée en mode droite-vers-gauche
                 "timestamp": datetime.now(),
                 "is_read": False
             }
@@ -49,6 +49,9 @@ class NotificationModel:
             # Convertir les objets ObjectId en chaînes pour la sérialisation JSON
             for notification in notifications:
                 notification["_id"] = str(notification["_id"])
+                # Inverser la clé pour afficher la clé originale (la clé est stockée en mode droite-vers-gauche)
+                if "key_used" in notification:
+                    notification["original_key"] = notification["key_used"][::-1]
             return notifications
         except Exception as e:
             print(f"Erreur lors de la récupération des notifications: {str(e)}")
@@ -89,8 +92,12 @@ class NotificationModel:
         """
         try:
             # Récupérer la clé originale depuis le modèle de clé
-            original_key = KeyModel.get_key(sender_email, receiver_email)
-            return original_key
+            stored_key = KeyModel.get_key(sender_email, receiver_email)
+            if stored_key:
+                # Si la clé est stockée en mode droite-vers-gauche, l'inverser pour obtenir la clé originale
+                # Mais pour l'instant, nous ne changeons pas le stockage des clés dans KeyModel
+                return stored_key
+            return None
         except Exception as e:
             print(f"Erreur lors de la récupération de la clé originale: {str(e)}")
             return None
