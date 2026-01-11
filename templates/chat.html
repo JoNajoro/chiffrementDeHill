@@ -57,12 +57,11 @@
         </select>
         <button type="button" onclick="generateKey()">Générer clé</button>
     </div>
-    <div id="keyDisplay" style="margin-bottom: 15px;"></div>
     
     <form id="message-form" action="{{ url_for('message.send_message') }}" method="POST">
         <input type="hidden" name="receiver_email" value="{{ user_email }}">
+        <input type="hidden" name="encryption_key" id="encryptionKey">
         <textarea name="message_content" placeholder="Écrivez un message..." id="messageInput" required style="width: 100%; min-height: 100px; margin-bottom: 10px; padding: 8px;"></textarea>
-        <textarea name="encryption_key" placeholder="Clé de chiffrement (Base64)..." id="encryptionKey" required style="width: 100%; min-height: 50px; margin-bottom: 10px; padding: 8px;"></textarea>
         <button type="submit" style="padding: 8px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Envoyer</button>
     </form>
     <a href="{{ url_for('main.list_users') }}">Retour à la liste des utilisateurs</a>
@@ -118,87 +117,7 @@
                     if (data.success) {
                         const key = data.key;
                         document.getElementById('encryptionKey').value = key;
-                        
-                        // Display the key with copy button
-                        const keyDisplay = document.getElementById('keyDisplay');
-                        keyDisplay.innerHTML = `
-                            <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #dee2e6;">
-                                <strong>Clé générée (${data.size}x${data.size}) :</strong>
-                                <div style="word-break: break-all; margin: 5px 0;">${key}</div>
-                                <button type="button" onclick="copyKey()" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                                    Copier la clé
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        alert(`Erreur: ${data.error}`);
-                    }
-                })
-                .catch(error => {
-                    alert(`Erreur: ${error}`);
-                });
-        }
-        
-        function copyKey() {
-            const keyInput = document.getElementById('encryptionKey');
-            keyInput.select();
-            document.execCommand('copy');
-            alert('Clé copiée dans le presse-papiers!');
-        }
-        
-        function loadStoredKey() {
-            const receiverEmail = '{{ user_email }}';
-            fetch(`{{ url_for("message.get_stored_key") }}?receiver_email=${receiverEmail}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const key = data.key;
-                        document.getElementById('encryptionKey').value = key;
-                        
-                        // Display the key with copy button
-                        const keyDisplay = document.getElementById('keyDisplay');
-                        keyDisplay.innerHTML = `
-                            <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #dee2e6;">
-                                <strong>Clé stockée :</strong>
-                                <div style="word-break: break-all; margin: 5px 0;">${key}</div>
-                                <button type="button" onclick="copyKey()" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                                    Copier la clé
-                                </button>
-                                <button type="button" onclick="regenerateKey()" style="padding: 5px 10px; background-color: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; margin-left: 10px;">
-                                    Régénérer la clé
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        alert(`Erreur: ${data.error}`);
-                    }
-                })
-                .catch(error => {
-                    alert(`Erreur: ${error}`);
-                });
-        }
-        
-        function regenerateKey() {
-            const difficulty = document.getElementById('difficulty').value;
-            const receiverEmail = '{{ user_email }}';
-            fetch(`{{ url_for("message.generate_key") }}?size=${difficulty}&receiver_email=${receiverEmail}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const key = data.key;
-                        document.getElementById('encryptionKey').value = key;
-                        
-                        // Display the key with copy button
-                        const keyDisplay = document.getElementById('keyDisplay');
-                        keyDisplay.innerHTML = `
-                            <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #dee2e6;">
-                                <strong>Clé régénérée (${data.size}x${data.size}) :</strong>
-                                <div style="word-break: break-all; margin: 5px 0;">${key}</div>
-                                <button type="button" onclick="copyKey()" style="padding: 5px 10px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer;">
-                                    Copier la clé
-                                </button>
-                            </div>
-                        `;
+                        alert('Clé générée avec succès et prête à être utilisée pour le chiffrement.');
                     } else {
                         alert(`Erreur: ${data.error}`);
                     }
