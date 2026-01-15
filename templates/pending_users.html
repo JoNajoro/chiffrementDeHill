@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Utilisateurs en attente{% endblock %}
+
+{% block content %}
+<h2>Utilisateurs en attente d'approbation</h2>
+{% if pending_users %}
+<table border="1">
+    <tr>
+        <th>CIN</th>
+        <th>Nom</th>
+        <th>Prénoms</th>
+        <th>Email</th>
+        <th>Fonction</th>
+        <th>Action</th>
+    </tr>
+    {% for user in pending_users %}
+    <tr>
+        <td>{{ user.cin }}</td>
+        <td>{{ user.nom }}</td>
+        <td>{{ user.prenoms }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.fonction }}</td>
+        <td>
+            <a href="{{ url_for('auth.approve_user', email=user.email) }}">Approuver</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>Aucun utilisateur en attente d'approbation.</p>
+{% endif %}
+<a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+{% endblock %}

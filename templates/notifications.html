@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<h2>Notifications</h2>
+{% if notifications %}
+<ul>
+    {% for notification in notifications %}
+    <li style="background-color: {% if not notification.is_read %}#f8d7da{% else %}#d4edda{% endif %}; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+        <strong>De:</strong> {{ notification.sender_email }}<br>
+        <strong>Message:</strong> {{ notification.original_key }}<br>
+        <small>{{ notification.timestamp }}</small>
+        {% if not notification.is_read %}
+        - <a href="{{ url_for('main.mark_notification_as_read', notification_id=notification._id) }}">Marquer comme lu</a>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>Aucune notification.</p>
+{% endif %}
+<a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+{% endblock %}

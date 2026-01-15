@@ -64,42 +64,101 @@
         <textarea name="message_content" placeholder="Écrivez un message..." id="messageInput" required style="width: 100%; min-height: 100px; margin-bottom: 10px; padding: 8px;"></textarea>
         <button type="submit" style="padding: 8px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Envoyer</button>
     </form>
+    
+    <form id="file-form" action="{{ url_for('message.send_file') }}" method="POST" enctype="multipart/form-data" style="margin-top: 10px;">
+        <input type="hidden" name="receiver_email" value="{{ user_email }}">
+        <input type="hidden" name="encryption_key" id="fileEncryptionKey">
+        <input type="file" name="file" id="fileInput" required style="margin-bottom: 10px;">
+        <button type="submit" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Envoyer Fichier</button>
+    </form>
     <a href="{{ url_for('main.list_users') }}">Retour à la liste des utilisateurs</a>
     
     <script>
-        // Load messages when the page loads
+        // Load messages and files when the page loads
         window.onload = function() {
-            fetch('{{ url_for("message.get_messages", user_email=user_email) }}')
-                .then(response => response.json())
-                .then(messages => {
-                    const chatContainer = document.getElementById('chat-container');
-                    chatContainer.innerHTML = '';
-                    messages.forEach(msg => {
-                        const messageDiv = document.createElement('div');
-                        messageDiv.classList.add('message');
-                        if (msg.sender_email === '{{ session["user"]["email"] }}') {
-                            messageDiv.classList.add('sent');
-                        } else {
-                            messageDiv.classList.add('received');
-                        }
-                        
+            loadMessagesAndFiles();
+        };
+        
+        function loadMessagesAndFiles() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+            
+            // Fetch both messages and files
+            Promise.all([
+                fetch('{{ url_for("message.get_messages", user_email=user_email) }}').then(r => r.json()),
+                fetch('{{ url_for("message.get_files", user_email=user_email) }}').then(r => r.json())
+            ]).then(([messages, files]) => {
+                // Combine messages and files into one array with type indicator
+                const allItems = [];
+                
+                messages.forEach(msg => {
+                    allItems.push({
+                        type: 'message',
+                        data: msg,
+                        timestamp: new Date(msg.timestamp)
+                    });
+                });
+                
+                files.forEach(file => {
+                    allItems.push({
+                        type: 'file',
+                        data: file,
+                        timestamp: new Date(file.timestamp)
+                    });
+                });
+                
+                // Sort by timestamp
+                allItems.sort((a, b) => a.timestamp - b.timestamp);
+                
+                // Render all items
+                allItems.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('message');
+                    
+                    const senderEmail = item.type === 'message' ? item.data.sender_email : item.data.sender_email;
+                    
+                    if (senderEmail === '{{ session["user"]["email"] }}') {
+                        itemDiv.classList.add('sent');
+                    } else {
+                        itemDiv.classList.add('received');
+                    }
+                    
+                    if (item.type === 'message') {
+                        const msg = item.data;
                         let messageHtml = msg.message_content;
                         
                         if (msg.is_encrypted) {
-                            messageHtml = `<div class="encrypted-message" onclick="promptDecryption(this, '${msg.message_content}')" style="cursor: pointer; color: #007bff; text-decoration: underline;">
-                                ${msg.message_content}
+                            // Escape the message content for safe use in onclick
+                            const escapedContent = msg.message_content.replace(/'/g, "\\'").replace(/"/g, '\\"');
+                            messageHtml = `<div class="encrypted-message" onclick="promptDecryption(this, '${escapedContent}')" style="cursor: pointer; color: #007bff; text-decoration: underline;">
+                                🔒 ${msg.message_content.substring(0, 50)}...
                             </div>`;
                         }
                         
-                        messageDiv.innerHTML = `
+                        itemDiv.innerHTML = `
                             <div>${messageHtml}</div>
                             <small style="display: block; margin-top: 5px; color: #6c757d;">${msg.timestamp}</small>
                         `;
-                        chatContainer.appendChild(messageDiv);
-                    });
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    } else {
+                        const file = item.data;
+                        const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        
+                        itemDiv.innerHTML = `
+                            <div id="${fileId}" class="file-message" style="cursor: pointer; color: #007bff; text-decoration: underline;"
+                                 onclick="promptFileDecryptionNew('${fileId}', '${file.original_filename}')">
+                                📎 Fichier chiffré: ${file.original_filename}
+                            </div>
+                            <input type="hidden" id="${fileId}_content" value="${file.file_content}">
+                            <small style="display: block; margin-top: 5px; color: #6c757d;">${file.timestamp}</small>
+                        `;
+                    }
+                    
+                    chatContainer.appendChild(itemDiv);
                 });
-        };
+                
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+        }
         
         function promptDecryption(element, encryptedMessage) {
             const decryptionKey = prompt('Entrez la clé de déchiffrement (Base64):');
@@ -117,6 +176,7 @@
                     if (data.success) {
                         const key = data.key;
                         document.getElementById('encryptionKey').value = key;
+                        document.getElementById('fileEncryptionKey').value = key;
                         alert('Clé générée avec succès et prête à être utilisée pour le chiffrement.');
                     } else {
                         alert(`Erreur: ${data.error}`);
@@ -154,6 +214,80 @@
             .catch(error => {
                 alert(`Erreur: ${error}`);
             });
+        }
+        
+        function promptFileDecryption(element, fileContent, originalFilename, encryptionKey) {
+            const decryptionKey = prompt('Entrez la clé de déchiffrement pour le fichier (Base64):');
+            if (decryptionKey) {
+                decryptFile(element, fileContent, originalFilename, decryptionKey);
+            }
+        }
+        
+        function promptFileDecryptionNew(fileId, originalFilename) {
+            const decryptionKey = prompt('Entrez la clé de déchiffrement pour le fichier (Base64):');
+            if (decryptionKey) {
+                const fileContentElement = document.getElementById(fileId + '_content');
+                const fileContent = fileContentElement.value;
+                const element = document.getElementById(fileId);
+                decryptFileWithServer(element, fileContent, originalFilename, decryptionKey);
+            }
+        }
+        
+        function decryptFileWithServer(element, fileContent, originalFilename, encryptionKey) {
+            // Send decryption request to server
+            fetch('{{ url_for("message.decrypt_file") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    encrypted_content: fileContent,
+                    encryption_key: encryptionKey,
+                    original_filename: originalFilename
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Create a download link for the decrypted file
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = 'data:application/octet-stream;base64,' + data.decrypted_content;
+                    downloadLink.download = data.original_filename;
+                    downloadLink.click();
+                    
+                    // Update the UI to show the file was downloaded
+                    element.innerHTML = `📎 Fichier téléchargé: ${originalFilename}`;
+                    element.style.color = '#28a745';
+                    element.style.textDecoration = 'none';
+                    element.style.cursor = 'default';
+                    element.onclick = null;
+                } else {
+                    alert(`Erreur: ${data.error}`);
+                }
+            })
+            .catch(error => {
+                alert(`Erreur: ${error}`);
+            });
+        }
+        
+        function decryptFile(element, fileContent, originalFilename, encryptionKey) {
+            // Use the provided encryption key directly for decryption
+            try {
+                // Create a download link for the decrypted file
+                const downloadLink = document.createElement('a');
+                downloadLink.href = 'data:application/octet-stream;base64,' + fileContent;
+                downloadLink.download = originalFilename;
+                downloadLink.click();
+                
+                // Update the UI to show the file was downloaded
+                element.innerHTML = `📎 Fichier téléchargé: ${originalFilename}`;
+                element.style.color = '#28a745';
+                element.style.textDecoration = 'none';
+                element.style.cursor = 'default';
+                element.onclick = null;
+            } catch (error) {
+                alert(`Erreur: ${error}`);
+            }
         }
     </script>
 </body>

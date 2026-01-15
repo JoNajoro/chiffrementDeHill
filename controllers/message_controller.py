@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from models.message_model import MessageModel
+from models.file_model import FileModel
 from models.hill_cipher import hill_chiffrement_ansi_base64, hill_dechiffrement_ansi_base64
 from models.chiffrement_model import base64_en_matrice, generer_matrice_inversible, matrice_en_base64
 from models.key_model import KeyModel
@@ -52,6 +53,52 @@ def send_message():
     
     return redirect(url_for('main.chat', user_email=receiver_email))
 
+@message_bp.route('/send_file', methods=['POST'])
+def send_file():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    receiver_email = request.form['receiver_email']
+    encryption_key = request.form.get('encryption_key', '')
+    sender_email = session['user']['email']
+    
+    # Check if a file was uploaded
+    if 'file' not in request.files:
+        flash("Aucun fichier sélectionné.", "danger")
+        return redirect(url_for('main.chat', user_email=receiver_email))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash("Aucun fichier sélectionné.", "danger")
+        return redirect(url_for('main.chat', user_email=receiver_email))
+    
+    # Use the stored key if no encryption key is provided
+    if not encryption_key:
+        stored_key = KeyModel.get_key(sender_email, receiver_email)
+        if stored_key:
+            encryption_key = stored_key
+        else:
+            flash("Clé de chiffrement manquante et aucune clé stockée disponible.", "danger")
+            return redirect(url_for('main.chat', user_email=receiver_email))
+    
+    # Save the file temporarily to encrypt it
+    file_path = f"temp_{file.filename}"
+    file.save(file_path)
+    
+    # Send the file using the FileModel
+    success, msg = FileModel.send_file(sender_email, receiver_email, file_path, encryption_key, file.filename)
+    
+    # Remove the temporary file
+    import os
+    os.remove(file_path)
+    
+    if success:
+        # Create a notification with the key used for the file
+        NotificationModel.create_notification(sender_email, receiver_email, encryption_key)
+    
+    flash(msg, "success" if success else "danger")
+    return redirect(url_for('main.chat', user_email=receiver_email))
+
 @message_bp.route('/get_messages/<user_email>')
 def get_messages(user_email):
     if 'user' not in session:
@@ -69,6 +116,31 @@ def get_messages(user_email):
         }
         for msg in messages
     ])
+
+@message_bp.route('/get_files/<user_email>')
+def get_files(user_email):
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    current_user_email = session['user']['email']
+    files = FileModel.get_files(current_user_email, user_email)
+    
+    result = []
+    for file in files:
+        # Convert bytes to string for JSON serialization
+        file_content = file['file_content']
+        if isinstance(file_content, bytes):
+            file_content = file_content.decode('utf-8')
+        
+        result.append({
+            "sender_email": file['sender_email'],
+            "receiver_email": file['receiver_email'],
+            "original_filename": file['original_filename'],
+            "file_content": file_content,
+            "timestamp": file['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+        })
+    
+    return jsonify(result)
 
 @message_bp.route('/decrypt_message', methods=['POST'])
 def decrypt_message():
@@ -195,6 +267,49 @@ def get_notifications():
         formatted_notifications.append(formatted_notification)
     
     return jsonify({"success": True, "notifications": formatted_notifications})
+
+@message_bp.route('/decrypt_file', methods=['POST'])
+def decrypt_file():
+    """
+    Déchiffre un fichier avec la clé fournie et le retourne pour téléchargement.
+    """
+    if 'user' not in session:
+        return jsonify({"success": False, "error": "Utilisateur non connecté"})
+    
+    try:
+        data = request.get_json()
+        encrypted_content = data.get('encrypted_content')
+        encryption_key = data.get('encryption_key')
+        original_filename = data.get('original_filename')
+        
+        if not encrypted_content or not encryption_key:
+            return jsonify({"success": False, "error": "Contenu chiffré ou clé manquante"})
+        
+        from models.crypto_utils import decrypt_file_bytes
+        import base64
+        
+        # The encrypted content is a Fernet token (UTF-8 string)
+        # Convert it to bytes for decryption
+        if isinstance(encrypted_content, str):
+            encrypted_bytes = encrypted_content.encode('utf-8')
+        else:
+            encrypted_bytes = encrypted_content
+        
+        # Decrypt the file content using the same key
+        decrypted_content = decrypt_file_bytes(encrypted_bytes, encryption_key)
+        
+        # Return the decrypted content as base64 for download
+        decrypted_base64 = base64.b64encode(decrypted_content).decode('utf-8')
+        
+        return jsonify({
+            "success": True, 
+            "decrypted_content": decrypted_base64,
+            "original_filename": original_filename
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Erreur lors du déchiffrement du fichier: {str(e)}"})
+
 
 @message_bp.route('/verify_password', methods=['POST'])
 def verify_password():
