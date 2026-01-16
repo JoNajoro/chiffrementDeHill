@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Documents</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .documents-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .documents-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+        }
+        .document-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            transition: box-shadow 0.3s;
+        }
+        .document-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .document-icon {
+            font-size: 40px;
+            margin-right: 15px;
+        }
+        .document-info {
+            flex-grow: 1;
+        }
+        .document-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+        .document-meta {
+            color: #666;
+            font-size: 12px;
+        }
+        .document-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-action {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .no-documents {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+        .no-documents-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="documents-container">
+        <div class="documents-header">
+            <div>
+                <h1>📁 Mes Documents</h1>
+                <p class="text-muted mb-0">Gérez vos documents personnels en toute sécurité</p>
+            </div>
+            <div class="nav-links">
+                <a href="{{ url_for('document.upload_document') }}" class="btn btn-primary">
+                    ➕ Ajouter un document
+                </a>
+                <a href="{{ url_for('document.logout_documents') }}" class="btn btn-outline-secondary">
+                    🔒 Verrouiller
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                    ← Tableau de bord
+                </a>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% if documents %}
+            <div class="documents-list">
+                {% for doc in documents %}
+                    <div class="document-card d-flex align-items-center">
+                        <div class="document-icon">
+                            {% if doc.file_type and 'image' in doc.file_type %}
+                                🖼️
+                            {% elif doc.file_type and 'pdf' in doc.file_type %}
+                                📄
+                            {% elif doc.file_type and ('word' in doc.file_type or 'document' in doc.file_type) %}
+                                📝
+                            {% elif doc.file_type and ('excel' in doc.file_type or 'spreadsheet' in doc.file_type) %}
+                                📊
+                            {% elif doc.file_type and 'text' in doc.file_type %}
+                                📃
+                            {% else %}
+                                📎
+                            {% endif %}
+                        </div>
+                        <div class="document-info">
+                            <div class="document-name">{{ doc.filename }}</div>
+                            {% if doc.description %}
+                                <div class="text-muted small">{{ doc.description }}</div>
+                            {% endif %}
+                            <div class="document-meta">
+                                <span>📅 {{ doc.uploaded_at.strftime('%d/%m/%Y à %H:%M') }}</span> | 
+                                <span>📦 {{ (doc.file_size / 1024)|round(2) }} Ko</span>
+                            </div>
+                        </div>
+                        <div class="document-actions">
+                            <a href="{{ url_for('document.view_document', document_id=doc._id) }}" 
+                               class="btn btn-sm btn-info btn-action" title="Voir">
+                                👁️ Voir
+                            </a>
+                            <a href="{{ url_for('document.download_document', document_id=doc._id) }}" 
+                               class="btn btn-sm btn-success btn-action" title="Télécharger">
+                                ⬇️ Télécharger
+                            </a>
+                            <form action="{{ url_for('document.delete_document', document_id=doc._id) }}" 
+                                  method="POST" style="display: inline;" 
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce document ?');">
+                                <button type="submit" class="btn btn-sm btn-danger btn-action" title="Supprimer">
+                                    🗑️ Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-muted mt-3">
+                <small>Total: {{ documents|length }} document(s)</small>
+            </div>
+        {% else %}
+            <div class="no-documents">
+                <div class="no-documents-icon">📂</div>
+                <h3>Aucun document</h3>
+                <p>Vous n'avez pas encore de documents. Commencez par en ajouter un!</p>
+                <a href="{{ url_for('document.upload_document') }}" class="btn btn-primary btn-lg">
+                    ➕ Ajouter mon premier document
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

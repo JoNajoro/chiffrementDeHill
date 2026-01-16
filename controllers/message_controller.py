@@ -117,6 +117,53 @@ def get_messages(user_email):
         for msg in messages
     ])
 
+@message_bp.route('/get_chat_data/<user_email>')
+def get_chat_data(user_email):
+    """
+    Récupère tous les messages et fichiers en une seule requête pour améliorer les performances.
+    """
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+    
+    current_user_email = session['user']['email']
+    
+    # Get messages
+    messages = MessageModel.get_messages(current_user_email, user_email)
+    messages_data = [
+        {
+            "type": "message",
+            "sender_email": msg['sender_email'],
+            "receiver_email": msg['receiver_email'],
+            "message_content": msg['message_content'],
+            "is_encrypted": msg.get('is_encrypted', False),
+            "timestamp": msg['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+        }
+        for msg in messages
+    ]
+    
+    # Get files
+    files = FileModel.get_files(current_user_email, user_email)
+    files_data = []
+    for file in files:
+        file_content = file['file_content']
+        if isinstance(file_content, bytes):
+            file_content = file_content.decode('utf-8')
+        
+        files_data.append({
+            "type": "file",
+            "sender_email": file['sender_email'],
+            "receiver_email": file['receiver_email'],
+            "original_filename": file['original_filename'],
+            "file_content": file_content,
+            "timestamp": file['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
+        })
+    
+    # Combine and sort by timestamp
+    all_data = messages_data + files_data
+    all_data.sort(key=lambda x: x['timestamp'])
+    
+    return jsonify(all_data)
+
 @message_bp.route('/get_files/<user_email>')
 def get_files(user_email):
     if 'user' not in session:

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajouter un Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .upload-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+        .upload-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-icon {
+            font-size: 60px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .custom-file-label::after {
+            content: "Parcourir";
+        }
+        .file-drop-zone {
+            border: 2px dashed #007bff;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background-color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-drop-zone:hover {
+            background-color: #e7f3ff;
+            border-color: #0056b3;
+        }
+        .file-drop-zone.dragover {
+            background-color: #d4edff;
+            border-color: #0056b3;
+        }
+        .btn-upload {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .file-preview {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            display: none;
+        }
+        .file-preview.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="upload-card">
+            <div class="text-center">
+                <div class="upload-icon">📤</div>
+                <h2>Ajouter un Document</h2>
+                <p class="text-muted">Téléversez un nouveau document dans votre espace personnel</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" enctype="multipart/form-data" class="mt-4">
+                <div class="form-group">
+                    <label class="file-drop-zone" for="file" id="dropZone">
+                        <div class="drop-icon">📁</div>
+                        <p class="mb-0"><strong>Cliquez pour sélectionner un fichier</strong></p>
+                        <p class="text-muted small">ou glissez-déposez votre fichier ici</p>
+                    </label>
+                    <input type="file" class="d-none" id="file" name="file" required>
+                </div>
+                
+                <div class="file-preview" id="filePreview">
+                    <strong>Fichier sélectionné:</strong>
+                    <span id="fileName"></span>
+                    <small class="text-muted" id="fileSize"></small>
+                </div>
+                
+                <div class="form-group mt-3">
+                    <label for="description"><strong>Description (optionnel):</strong></label>
+                    <textarea class="form-control" id="description" name="description" rows="3" 
+                              placeholder="Ajoutez une description pour ce document..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-upload mt-3">
+                    📤 Téléverser le document
+                </button>
+            </form>
+            
+            <hr>
+            
+            <div class="text-center">
+                <a href="{{ url_for('document.list_documents') }}" class="btn btn-outline-secondary">
+                    ← Retour à Mes Documents
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('file');
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        
+        // Click on drop zone triggers file input
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFilePreview(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                updateFilePreview(e.dataTransfer.files[0]);
+            }
+        });
+        
+        function updateFilePreview(file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = ` (${(file.size / 1024).toFixed(2)} Ko)`;
+            filePreview.classList.add('active');
+        }
+    </script>
+</body>
+</html>

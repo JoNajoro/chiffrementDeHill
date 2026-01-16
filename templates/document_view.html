@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détails du Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .view-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+        .view-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .document-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 150px;
+            color: #555;
+        }
+        .info-value {
+            flex-grow: 1;
+            color: #333;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .preview-area {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="view-container">
+        <div class="view-card">
+            <div class="text-center">
+                <div class="document-icon">
+                    {% if document.file_type and 'image' in document.file_type %}
+                        🖼️
+                    {% elif document.file_type and 'pdf' in document.file_type %}
+                        📄
+                    {% elif document.file_type and ('word' in document.file_type or 'document' in document.file_type) %}
+                        📝
+                    {% elif document.file_type and ('excel' in document.file_type or 'spreadsheet' in document.file_type) %}
+                        📊
+                    {% elif document.file_type and 'text' in document.file_type %}
+                        📃
+                    {% else %}
+                        📎
+                    {% endif %}
+                </div>
+                <h2>{{ document.filename }}</h2>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="document-details mt-4">
+                <div class="info-row">
+                    <span class="info-label">📁 Nom du fichier:</span>
+                    <span class="info-value">{{ document.filename }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">📦 Taille:</span>
+                    <span class="info-value">{{ (document.file_size / 1024)|round(2) }} Ko</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">📋 Type:</span>
+                    <span class="info-value">{{ document.file_type or 'Non spécifié' }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">📅 Téléversé le:</span>
+                    <span class="info-value">{{ document.uploaded_at.strftime('%d/%m/%Y à %H:%M') }}</span>
+                </div>
+                
+                {% if document.updated_at and document.updated_at != document.uploaded_at %}
+                <div class="info-row">
+                    <span class="info-label">🔄 Mis à jour le:</span>
+                    <span class="info-value">{{ document.updated_at.strftime('%d/%m/%Y à %H:%M') }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="info-row">
+                    <span class="info-label">📝 Description:</span>
+                    <span class="info-value">{{ document.description or 'Aucune description' }}</span>
+                </div>
+            </div>
+            
+            {% if document.file_type and 'image' in document.file_type %}
+            <div class="preview-area">
+                <h5>Aperçu de l'image</h5>
+                <img src="data:{{ document.file_type }};base64,{{ document.file_content }}" 
+                     class="preview-image" alt="{{ document.filename }}">
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('document.download_document', document_id=document._id) }}" 
+                   class="btn btn-success btn-lg">
+                    ⬇️ Télécharger
+                </a>
+                <form action="{{ url_for('document.delete_document', document_id=document._id) }}" 
+                      method="POST" style="display: inline;"
+                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce document ?');">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        🗑️ Supprimer
+                    </button>
+                </form>
+            </div>
+            
+            <hr>
+            
+            <div class="text-center">
+                <a href="{{ url_for('document.list_documents') }}" class="btn btn-outline-primary btn-lg">
+                    ← Retour à Mes Documents
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

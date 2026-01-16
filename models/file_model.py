@@ -16,12 +16,13 @@ class FileModel:
         encrypted_file_content = encrypt_file_bytes(file_content, encryption_key)
 
         # Stocker les métadonnées du fichier dans la base de données
+        # Note: La clé n'est PAS stockée ici (comme pour les messages texte)
+        # Elle est envoyée via le système de notifications
         file_metadata = {
             "sender_email": sender_email,
             "receiver_email": receiver_email,
             "original_filename": original_filename,
             "file_content": encrypted_file_content,
-            "encryption_key": encryption_key,
             "timestamp": datetime.now()
         }
         FileModel.collection.insert_one(file_metadata)

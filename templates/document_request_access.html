@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accès Mes Documents</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .access-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+        .access-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .access-icon {
+            font-size: 60px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .btn-request {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="access-container">
+        <div class="access-card text-center">
+            <div class="access-icon">🔐</div>
+            <h2>Accès à Mes Documents</h2>
+            <p class="lead">Pour accéder à vos documents personnels, vous devez obtenir une clé d'accès sécurisée.</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST">
+                <button type="submit" class="btn btn-primary btn-request">
+                    📩 Demander une clé d'accès
+                </button>
+            </form>
+            
+            <p class="info-text">
+                <strong>Comment ça marche ?</strong><br>
+                1. Cliquez sur le bouton ci-dessus<br>
+                2. Une clé d'accès sera envoyée dans vos notifications<br>
+                3. Copiez la clé et entrez-la pour accéder à vos documents
+            </p>
+            
+            <hr>
+            
+            <a href="{{ url_for('document.verify_access') }}" class="btn btn-outline-secondary">
+                J'ai déjà une clé d'accès
+            </a>
+            <br><br>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-link">
+                ← Retour au tableau de bord
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
