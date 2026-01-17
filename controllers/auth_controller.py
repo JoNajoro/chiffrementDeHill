@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, make_response
 from models.user_model import UserModel
 
 auth_bp = Blueprint('auth', __name__)
@@ -48,7 +48,12 @@ def login():
             flash(user_or_msg, "danger")
             return redirect(url_for('auth.login'))
 
-    return render_template('login.html')
+    # Ajouter des headers pour empêcher le cache
+    response = make_response(render_template('login.html'))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 # Déconnexion
 @auth_bp.route('/logout')
@@ -57,7 +62,23 @@ def logout():
     flash("Déconnecté.", "success")
     return redirect(url_for('auth.login'))
 
-# Déverrouillage de session
+# Verrouiller la session (appelé par le client quand le chrono atteint 00:00)
+@auth_bp.route('/lock', methods=['POST'])
+def lock():
+    if 'user' not in session:
+        return jsonify({'success': False, 'message': 'Session expirée'}), 401
+
+    session['locked'] = True
+    return jsonify({'success': True})
+
+# Vérifier l'état de verrouillage de la session
+@auth_bp.route('/check_lock')
+def check_lock():
+    logged_in = 'user' in session
+    locked = session.get('locked', False)
+    return jsonify({'logged_in': logged_in, 'locked': locked})
+
+# Déverrouiller la session
 @auth_bp.route('/unlock', methods=['POST'])
 def unlock():
     if 'user' not in session:
@@ -65,15 +86,15 @@ def unlock():
 
     data = request.get_json()
     password = data.get('password')
-
     if not password:
-        return jsonify({'success': False, 'message': 'Mot de passe requis'}), 400
+        return jsonify({'success': False, 'message': 'Mot de passe requis'})
 
-    # Vérifier le mot de passe de l'utilisateur actuel
-    email = session['user']['email']
-    success, user_or_msg = UserModel.login(email, password)
-
+    # Vérifier le mot de passe
+    success, user_or_msg = UserModel.login(session['user']['email'], password)
     if success:
+        session['locked'] = False
         return jsonify({'success': True})
     else:
-        return jsonify({'success': False, 'message': 'Mot de passe incorrect'}), 401
+        return jsonify({'success': False, 'message': 'Mot de passe incorrect'})
+
+

@@ -106,8 +106,8 @@
     </style>
 </head>
 <body>
-    <!-- Countdown Timer - Visible (only for logged in users) -->
-    {% if session.user %}
+    <!-- Countdown Timer - Visible (only for logged in users and not on auth pages) -->
+    {% if session.user and request.endpoint not in ['auth.login', 'auth.register'] %}
     <div id="countdown-timer" class="countdown-timer" style="display: flex !important; visibility: visible !important;">
         <span class="timer-icon">⏱️</span>
         <div>
@@ -117,10 +117,11 @@
     </div>
     <script>console.log('USER IS LOGGED IN - Timer should be visible');</script>
     {% else %}
-    <script>console.log('USER NOT LOGGED IN - No timer');</script>
+    <script>console.log('USER NOT LOGGED IN or on auth page - No timer');</script>
     {% endif %}
 
-    <!-- Lock Screen -->
+    <!-- Lock Screen - Not on auth pages -->
+    {% if request.endpoint not in ['auth.login', 'auth.register'] %}
     <div id="lock-screen" class="lock-screen">
         <div class="lock-modal">
             <h2>🔒 Session Verrouillée</h2>
@@ -132,6 +133,7 @@
             <div id="unlock-error" class="error"></div>
         </div>
     </div>
+    {% endif %}
 
     <header>
         <h3>Mon Application de Chat Sécurisé</h3>
@@ -230,6 +232,15 @@
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
+            
+            // Notifier le serveur que la session est verrouillée
+            fetch('/lock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).catch(err => console.error('Erreur lors du verrouillage:', err));
+            
             document.getElementById('lock-screen').classList.add('show');
             document.getElementById('unlock-password').value = '';
             document.getElementById('unlock-error').textContent = '';
@@ -239,6 +250,35 @@
             if (timerContainer) {
                 timerContainer.style.display = 'none';
             }
+        }
+        
+        // Vérifier si la session est verrouillée au chargement
+        function checkLockStatus() {
+            fetch('/check_lock')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in && data.locked) {
+                        // La session est verrouillée, afficher l'écran de verrouillage
+                        document.getElementById('lock-screen').classList.add('show');
+                        const timerContainer = document.getElementById('countdown-timer');
+                        if (timerContainer) {
+                            timerContainer.style.display = 'none';
+                        }
+                    } else if (data.logged_in && !data.locked) {
+                        // La session n'est pas verrouillée, démarrer le chrono
+                        startCountdown();
+                    } else {
+                        // Désactiver le chrono si l'utilisateur n'est pas connecté
+                        const timerContainer = document.getElementById('countdown-timer');
+                        if (timerContainer) {
+                            timerContainer.style.display = 'none';
+                        }
+                        if (countdownInterval) {
+                            clearInterval(countdownInterval);
+                        }
+                    }
+                })
+                .catch(err => console.error('Erreur lors de la vérification:', err));
         }
 
         // Unlock the screen
@@ -309,8 +349,8 @@
             // Only start if user is logged in (timer element exists)
             const timerEl = document.getElementById('countdown-timer');
             if (timerEl) {
-                console.log('Starting countdown timer...');
-                startCountdown();
+                console.log('Checking lock status...');
+                checkLockStatus();
             } else {
                 console.log('No countdown timer element found (user not logged in)');
             }
