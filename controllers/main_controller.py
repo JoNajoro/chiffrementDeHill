@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from models.user_model import UserModel
+from bson import ObjectId
 
 main_bp = Blueprint('main', __name__)
 
@@ -37,6 +38,12 @@ def edit_user(user_email):
         nom = request.form['nom']
         prenoms = request.form['prenoms']
         fonction = request.form['fonction']
+
+        # Validation du CIN : doit faire exactement 12 chiffres
+        if not cin or len(cin) != 12 or not cin.isdigit():
+            flash("Le CIN doit contenir exactement 12 chiffres.", "danger")
+            return redirect(url_for('main.edit_user', user_email=user_email))
+
         success, msg = UserModel.update_user(user_email, cin=cin, nom=nom, prenoms=prenoms, fonction=fonction)
         flash(msg, "success" if success else "danger")
         if success:
@@ -68,4 +75,31 @@ def pending_users():
         return redirect(url_for('main.index'))  # or flash message
     pending_users_list = UserModel.get_pending_users()
     return render_template('pending_users.html', pending_users=pending_users_list)
+
+@main_bp.route('/mark_approval_notification_as_read/<notification_id>', methods=['POST'])
+def mark_approval_notification_as_read(notification_id):
+    """
+    Marque une notification d'approbation comme lue via AJAX.
+    """
+    if 'user' not in session:
+        return jsonify({"success": False, "error": "Utilisateur non connecté"})
+
+    try:
+        success = ApprovalNotificationModel.mark_approval_notification_as_read(notification_id)
+        if success:
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Notification non trouvée"})
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la notification d'approbation: {str(e)}")
+        return jsonify({"success": False, "error": "Erreur serveur"})
+
+@main_bp.route('/approval_notifications')
+def approval_notifications():
+    if 'user' not in session:
+        return redirect(url_for('auth.login'))
+
+    user_email = session['user']['email']
+    approval_notifications_list = ApprovalNotificationModel.get_approval_notifications_for_user(user_email)
+    return render_template('approval_notifications.html', approval_notifications=approval_notifications_list)
 

@@ -365,29 +365,54 @@ def verify_password():
     """
     if 'user' not in session:
         return jsonify({"success": False, "error": "Utilisateur non connecté"})
-    
+
     try:
         data = request.get_json()
         password = data.get('password', '')
-        
+
         if not password:
             return jsonify({"success": False, "error": "Mot de passe requis"})
-        
+
         # Récupérer l'utilisateur actuel
         user_email = session['user']['email']
         user = UserModel.get_user_by_email(user_email)
-        
+
         if not user:
             return jsonify({"success": False, "error": "Utilisateur non trouvé"})
-        
+
         # Vérifier le mot de passe en utilisant le hash sécurisé
         if check_password_hash(user["password"], password):
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Mot de passe incorrect"})
-            
+
     except Exception as e:
         print(f"Erreur lors de la vérification du mot de passe: {str(e)}")
         return jsonify({"success": False, "error": "Erreur serveur lors de la vérification du mot de passe"})
+
+@message_bp.route('/mark_notification_as_read/<notification_id>', methods=['POST'])
+def mark_notification_as_read(notification_id):
+    """
+    Marque une notification comme lue via AJAX.
+    """
+    if 'user' not in session:
+        return jsonify({"success": False, "error": "Utilisateur non connecté"})
+
+    try:
+        success = NotificationModel.mark_notification_as_read(notification_id)
+        if success:
+            # Recalculer le nombre de notifications non lues
+            user_email = session['user']['email']
+            from models.approval_notification_model import ApprovalNotificationModel
+            unread_notifications = NotificationModel.get_unread_count(user_email)
+            unread_approvals = ApprovalNotificationModel.get_unread_count(user_email)
+            total_unread = unread_notifications + unread_approvals
+
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False, "error": "Notification non trouvée"})
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour de la notification: {str(e)}")
+        return jsonify({"success": False, "error": "Erreur serveur"})
     
     

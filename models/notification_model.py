@@ -82,11 +82,11 @@ class NotificationModel:
     def get_original_key(sender_email, receiver_email):
         """
         Récupère la clé originale utilisée pour le chiffrement entre deux utilisateurs.
-        
+
         Args:
             sender_email (str): Email de l'expéditeur.
             receiver_email (str): Email du destinataire.
-        
+
         Returns:
             str: La clé originale utilisée pour le chiffrement, ou None si non trouvée.
         """

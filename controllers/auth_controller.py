@@ -15,6 +15,11 @@ def register():
         password2 = request.form['password2']
         fonction = request.form['fonction']
 
+        # Validation du CIN : doit faire exactement 12 chiffres
+        if not cin or len(cin) != 12 or not cin.isdigit():
+            flash("Le CIN doit contenir exactement 12 chiffres.", "danger")
+            return redirect(url_for('auth.register'))
+
         if password != password2:
             flash("Les mots de passe ne correspondent pas.", "danger")
             return redirect(url_for('auth.register'))

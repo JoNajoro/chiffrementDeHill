@@ -14,4 +14,7 @@ app.register_blueprint(message_bp)
 app.register_blueprint(document_bp)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Pour accéder depuis d'autres appareils sur le réseau :
+    # host='0.0.0.0' permet d'écouter sur toutes les interfaces réseau
+    # port=5000 est le port par défaut de Flask
+    app.run(debug=True, host='0.0.0.0', port=5000)

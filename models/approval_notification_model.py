@@ -83,11 +83,11 @@ class ApprovalNotificationModel:
     def get_approval_message(sender_email, receiver_email):
         """
         Récupère le message original d'une notification d'approbation.
-        
+
         Args:
             sender_email (str): Email de l'expéditeur.
             receiver_email (str): Email du destinataire.
-            
+
         Returns:
             str: Le message original de la notification d'approbation, ou None si non trouvé.
         """
