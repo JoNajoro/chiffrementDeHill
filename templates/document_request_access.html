@@ -34,8 +34,130 @@
             margin-top: 20px;
         }
     </style>
+    <!-- Countdown Timer Styles -->
+    <style>
+        .countdown-timer {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 9998;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid #0f3460;
+        }
+        .countdown-timer.warning {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border-color: #ff4500;
+            animation: pulse 1s infinite;
+        }
+        .countdown-timer.critical {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border-color: #ff0000;
+            animation: pulse 0.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .countdown-timer .timer-icon {
+            font-size: 20px;
+        }
+        .countdown-timer .timer-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .countdown-timer .timer-value {
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+
+        .lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .lock-screen.show {
+            display: flex;
+        }
+        .lock-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .lock-modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .lock-modal input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .lock-modal button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .lock-modal button:hover {
+            background: #0056b3;
+        }
+        .lock-modal .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
+    <!-- Countdown Timer - Visible for logged in users -->
+    <div id="countdown-timer" class="countdown-timer" style="display: flex !important; visibility: visible !important;">
+        <span class="timer-icon">⏱️</span>
+        <div>
+            <div class="timer-label">Verrouillage dans</div>
+            <div class="timer-value" id="timer-display">01:00</div>
+        </div>
+    </div>
+
+    <!-- Lock Screen -->
+    <div id="lock-screen" class="lock-screen">
+        <div class="lock-modal">
+            <h2>🔒 Session Verrouillée</h2>
+            <p>Entrez votre mot de passe pour déverrouiller</p>
+            <input type="password" id="unlock-password" placeholder="Mot de passe">
+            <br>
+            <button onclick="unlockScreen()">Déverrouiller</button>
+            <button onclick="logout()">Déconnexion</button>
+            <div id="unlock-error" class="error"></div>
+        </div>
+    </div>
+
     <div class="access-container">
         <div class="access-card text-center">
             <div class="access-icon">🔐</div>
@@ -83,5 +205,205 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Countdown Timer Variables
+        let countdownInterval;
+        let remainingSeconds = 60; // Start at 60 seconds (01:00)
+        const TOTAL_SECONDS = 60; // 1 minute total
+        const WARNING_THRESHOLD = 30; // Show warning at 30 seconds
+        const CRITICAL_THRESHOLD = 10; // Show critical at 10 seconds
+
+        // Format seconds as MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update the countdown display
+        function updateCountdownDisplay() {
+            const timerDisplay = document.getElementById('timer-display');
+            const timerContainer = document.getElementById('countdown-timer');
+
+            if (!timerDisplay || !timerContainer) return;
+
+            timerDisplay.textContent = formatTime(remainingSeconds);
+
+            // Update visual state based on remaining time
+            timerContainer.classList.remove('warning', 'critical');
+            if (remainingSeconds <= CRITICAL_THRESHOLD) {
+                timerContainer.classList.add('critical');
+            } else if (remainingSeconds <= WARNING_THRESHOLD) {
+                timerContainer.classList.add('warning');
+            }
+        }
+
+        // Start or restart the countdown
+        function startCountdown() {
+            // Clear any existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            // Reset to full time
+            remainingSeconds = TOTAL_SECONDS;
+            updateCountdownDisplay();
+
+            // Start counting down
+            countdownInterval = setInterval(function() {
+                if (document.getElementById('lock-screen').classList.contains('show')) {
+                    // Screen is locked, stop countdown
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                remainingSeconds--;
+                updateCountdownDisplay();
+
+                if (remainingSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    lockScreen();
+                }
+            }, 1000);
+        }
+
+        // Reset timer on user activity
+        function resetTimer() {
+            if (!document.getElementById('lock-screen').classList.contains('show')) {
+                startCountdown();
+            }
+        }
+
+        // Lock the screen
+        function lockScreen() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            // Notifier le serveur que la session est verrouillée
+            fetch('/lock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).catch(err => console.error('Erreur lors du verrouillage:', err));
+
+            document.getElementById('lock-screen').classList.add('show');
+            document.getElementById('unlock-password').value = '';
+            document.getElementById('unlock-error').textContent = '';
+
+            // Hide the timer when locked
+            const timerContainer = document.getElementById('countdown-timer');
+            if (timerContainer) {
+                timerContainer.style.display = 'none';
+            }
+        }
+
+        // Vérifier si la session est verrouillée au chargement
+        function checkLockStatus() {
+            fetch('/check_lock')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in && data.locked) {
+                        // La session est verrouillée, afficher l'écran de verrouillage
+                        document.getElementById('lock-screen').classList.add('show');
+                        const timerContainer = document.getElementById('countdown-timer');
+                        if (timerContainer) {
+                            timerContainer.style.display = 'none';
+                        }
+                    } else if (data.logged_in && !data.locked) {
+                        // La session n'est pas verrouillée, démarrer le chrono
+                        startCountdown();
+                    } else {
+                        // Désactiver le chrono si l'utilisateur n'est pas connecté
+                        const timerContainer = document.getElementById('countdown-timer');
+                        if (timerContainer) {
+                            timerContainer.style.display = 'none';
+                        }
+                        if (countdownInterval) {
+                            clearInterval(countdownInterval);
+                        }
+                    }
+                })
+                .catch(err => console.error('Erreur lors de la vérification:', err));
+        }
+
+        // Unlock the screen
+        function unlockScreen() {
+            const password = document.getElementById('unlock-password').value;
+            if (!password) {
+                document.getElementById('unlock-error').textContent = 'Veuillez entrer votre mot de passe';
+                return;
+            }
+
+            fetch('/unlock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('lock-screen').classList.remove('show');
+
+                    // Show the timer again
+                    const timerContainer = document.getElementById('countdown-timer');
+                    if (timerContainer) {
+                        timerContainer.style.display = 'flex';
+                    }
+
+                    // Restart countdown
+                    startCountdown();
+                } else {
+                    document.getElementById('unlock-error').textContent = data.message || 'Mot de passe incorrect';
+                }
+            })
+            .catch(error => {
+                document.getElementById('unlock-error').textContent = 'Erreur de connexion';
+                console.error('Error:', error);
+            });
+        }
+
+        // Logout function
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        // Throttle function to prevent too many resets
+        let lastResetTime = 0;
+        const THROTTLE_DELAY = 1000; // Only reset once per second max
+
+        function throttledResetTimer() {
+            const now = Date.now();
+            if (now - lastResetTime >= THROTTLE_DELAY) {
+                lastResetTime = now;
+                resetTimer();
+            }
+        }
+
+        // Event listeners for user activity
+        document.addEventListener('mousemove', throttledResetTimer);
+        document.addEventListener('keypress', throttledResetTimer);
+        document.addEventListener('click', throttledResetTimer);
+        document.addEventListener('scroll', throttledResetTimer);
+        document.addEventListener('touchstart', throttledResetTimer);
+        document.addEventListener('keydown', throttledResetTimer);
+
+        // Start the timer when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Checking lock status...');
+            checkLockStatus();
+        });
+
+        // Handle Enter key in password field
+        document.getElementById('unlock-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                unlockScreen();
+            }
+        });
+    </script>
 </body>
 </html>

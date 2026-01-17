@@ -35,14 +35,18 @@ def login():
 
         success, user_or_msg = UserModel.login(email, password)
         if success:
+            is_admin = (email == 'najorojoelson@gmail.com')
             session['user'] = {
                 "cin": user_or_msg['cin'],
                 "nom": user_or_msg['nom'],
                 "prenoms": user_or_msg['prenoms'],
                 "email": user_or_msg['email'],
-                "fonction": user_or_msg['fonction']
+                "fonction": user_or_msg['fonction'],
+                "is_admin": is_admin
             }
             flash("Connexion réussie !", "success")
+            if is_admin:
+                flash("Bienvenue Administrateur ! Vous avez accès aux fonctionnalités de gestion des utilisateurs.", "info")
             return redirect(url_for('main.index'))
         else:
             flash(user_or_msg, "danger")
@@ -97,5 +101,39 @@ def unlock():
         return jsonify({'success': True})
     else:
         return jsonify({'success': False, 'message': 'Mot de passe incorrect'})
+
+# Approuver un utilisateur
+@auth_bp.route('/approve_user/<email>', methods=['POST'])
+def approve_user(email):
+    if 'user' not in session or not session['user'].get('is_admin', False):
+        return jsonify({'success': False, 'message': 'Accès non autorisé'}), 403
+
+    success, msg = UserModel.approve_user(email)
+    if success:
+        # Envoyer une notification à l'utilisateur approuvé
+        from models.approval_notification_model import ApprovalNotificationModel
+        admin_email = session['user']['email']
+        message = f"Votre compte a été approuvé par l'administrateur {admin_email}."
+        ApprovalNotificationModel.create_approval_notification(email, admin_email, message)
+        return jsonify({'success': True, 'message': msg})
+    else:
+        return jsonify({'success': False, 'message': msg})
+
+# Rejeter un utilisateur
+@auth_bp.route('/reject_user/<email>', methods=['POST'])
+def reject_user(email):
+    if 'user' not in session or not session['user'].get('is_admin', False):
+        return jsonify({'success': False, 'message': 'Accès non autorisé'}), 403
+
+    success, msg = UserModel.reject_user(email)
+    if success:
+        # Envoyer une notification de rejet
+        from models.approval_notification_model import ApprovalNotificationModel
+        admin_email = session['user']['email']
+        message = f"Votre demande d'inscription a été rejetée par l'administrateur {admin_email}."
+        ApprovalNotificationModel.create_approval_notification(email, admin_email, message)
+        return jsonify({'success': True, 'message': msg})
+    else:
+        return jsonify({'success': False, 'message': msg})
 
 

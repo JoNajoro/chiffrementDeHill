@@ -41,13 +41,69 @@
         <p><strong>CIN:</strong> {{ session['user']['cin'] }}</p>
         <p><strong>Email:</strong> {{ session['user']['email'] }}</p>
         <p><strong>Fonction:</strong> {{ session['user']['fonction'] }}</p>
-        
+
         <div class="dashboard-actions">
             <a href="{{ url_for('main.list_users') }}">Liste des utilisateurs</a>
+            {% if session['user'].get('is_admin') %}
+            <a href="{{ url_for('main.pending_users') }}">Utilisateurs en attente</a>
+            {% endif %}
             <a href="{{ url_for('message.notifications') }}">Boîte de notifications</a>
             <a href="{{ url_for('document.request_access') }}">📁 Mes documents</a>
             <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
         </div>
     </div>
 </div>
+
+
+<script>
+    // Dashboard-specific inactivity timer with visual countdown
+    let lastDashboardActivity = Date.now();
+    let dashboardCountdown = 60; // 60 seconds
+    let dashboardLockInterval;
+
+    function formatDashboardTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateDashboardCountdown() {
+        const pageTimerDisplay = document.getElementById('page-timer-display');
+        if (pageTimerDisplay) {
+            pageTimerDisplay.textContent = formatDashboardTime(dashboardCountdown);
+        }
+
+        // Check if 1 second of inactivity
+        if (Date.now() - lastDashboardActivity >= 1000) {
+            dashboardCountdown--;
+            if (dashboardCountdown <= 0) {
+                // Lock the session due to dashboard inactivity (imitate main timer)
+                clearInterval(dashboardLockInterval);
+                lockScreen();
+            }
+        }
+    }
+
+    function resetDashboardActivity() {
+        lastDashboardActivity = Date.now();
+        dashboardCountdown = 60; // Reset to 60 seconds
+        updateDashboardCountdown();
+    }
+
+    // Start dashboard inactivity monitoring with visual countdown
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDashboardCountdown(); // Initial display
+        dashboardLockInterval = setInterval(updateDashboardCountdown, 1000); // Update every second
+
+        // Reset timer on dashboard interactions
+        const dashboardContainer = document.querySelector('.dashboard-container');
+        if (dashboardContainer) {
+            dashboardContainer.addEventListener('click', resetDashboardActivity);
+            dashboardContainer.addEventListener('mousemove', resetDashboardActivity);
+            dashboardContainer.addEventListener('keypress', resetDashboardActivity);
+            dashboardContainer.addEventListener('scroll', resetDashboardActivity);
+            dashboardContainer.addEventListener('touchstart', resetDashboardActivity);
+        }
+    });
+</script>
 {% endblock %}

@@ -12,6 +12,7 @@
             <th>Prénoms</th>
             <th>Email</th>
             <th>Fonction</th>
+            <th>Statut</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -25,8 +26,24 @@
             <td>{{ user['email'] }}</td>
             <td>{{ user['fonction'] }}</td>
             <td>
+                {% if user.get('approved', False) %}
+                    Approuvé
+                {% else %}
+                    En attente
+                {% endif %}
+            </td>
+            <td>
                 <a href="{{ url_for('main.chat', user_email=user['email']) }}">Discuter</a>
                 <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" style="margin-left: 10px;">Voir la clé</a>
+                {% if session['user'].get('is_admin') %}
+                {% if not user.get('approved', False) %}
+                <button onclick="approveUser('{{ user['email'] }}')" style="margin-left: 10px;">Approuver</button>
+                <button onclick="rejectUser('{{ user['email'] }}')" style="margin-left: 10px;">Rejeter</button>
+                {% else %}
+                <a href="{{ url_for('main.edit_user', user_email=user['email']) }}" style="margin-left: 10px;">Modifier</a>
+                <a href="{{ url_for('main.delete_user', user_email=user['email']) }}" style="margin-left: 10px;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</a>
+                {% endif %}
+                {% endif %}
             </td>
         </tr>
         {% endif %}
@@ -37,4 +54,46 @@
 <br><br>
 
 <a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+
+<script>
+function approveUser(email) {
+    if (confirm('Êtes-vous sûr de vouloir approuver cet utilisateur ?')) {
+        fetch(`/approve_user/${email}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+
+function rejectUser(email) {
+    if (confirm('Êtes-vous sûr de vouloir rejeter cet utilisateur ?')) {
+        fetch(`/reject_user/${email}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+</script>
 {% endblock %}

@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter un Document</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Document{% endblock %}
+
+{% block content %}
+<style>
         .upload-container {
             max-width: 600px;
             margin: 50px auto;
@@ -59,8 +57,6 @@
             display: block;
         }
     </style>
-</head>
-<body>
     <div class="upload-container">
         <div class="upload-card">
             <div class="text-center">
@@ -118,11 +114,61 @@
             </div>
         </div>
     </div>
-    
+
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
     <script>
+        // Page-specific inactivity timer with visual countdown
+        let lastPageActivity = Date.now();
+        let pageCountdown = 60; // 60 seconds
+        let pageLockInterval;
+
+        function formatPageTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updatePageCountdown() {
+            const pageTimerDisplay = document.getElementById('page-timer-display');
+            if (pageTimerDisplay) {
+                pageTimerDisplay.textContent = formatPageTime(pageCountdown);
+            }
+
+            // Check if 1 second of inactivity
+            if (Date.now() - lastPageActivity >= 1000) {
+                pageCountdown--;
+                if (pageCountdown <= 0) {
+                    // Lock the session due to page inactivity (imitate main timer)
+                    clearInterval(pageLockInterval);
+                    lockScreen();
+                }
+            }
+        }
+
+        function resetPageActivity() {
+            lastPageActivity = Date.now();
+            pageCountdown = 60; // Reset to 60 seconds
+            updatePageCountdown();
+        }
+
+        // Start page inactivity monitoring with visual countdown
+        updatePageCountdown(); // Initial display
+        pageLockInterval = setInterval(updatePageCountdown, 1000); // Update every second
+
+        // Reset timer on page interactions
+        document.addEventListener('click', resetPageActivity);
+        document.addEventListener('mousemove', resetPageActivity);
+        document.addEventListener('keypress', resetPageActivity);
+        document.addEventListener('scroll', resetPageActivity);
+        document.addEventListener('touchstart', resetPageActivity);
+    </script>
+
+    <script>
+{% endblock %}
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('file');
         const filePreview = document.getElementById('filePreview');
@@ -164,5 +210,4 @@
             filePreview.classList.add('active');
         }
     </script>
-</body>
-</html>
+{% endblock %}

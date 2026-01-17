@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier l'utilisateur{% endblock %}
+
+{% block content %}
+<h1>Modifier l'utilisateur</h1>
+<form method="post">
+    <label for="cin">CIN:</label>
+    <input type="text" name="cin" value="{{ user['cin'] }}" required><br>
+
+    <label for="nom">Nom:</label>
+    <input type="text" name="nom" value="{{ user['nom'] }}" required><br>
+
+    <label for="prenoms">Prénoms:</label>
+    <input type="text" name="prenoms" value="{{ user['prenoms'] }}" required><br>
+
+    <label for="fonction">Fonction:</label>
+    <select name="fonction" required>
+        <option value="Directeur" {% if user['fonction'] == 'Directeur' %}selected{% endif %}>Directeur</option>
+        <option value="Directeur Adjoint" {% if user['fonction'] == 'Directeur Adjoint' %}selected{% endif %}>Directeur Adjoint</option>
+        <option value="Chef de Service Administratif et Financier" {% if user['fonction'] == 'Chef de Service Administratif et Financier' %}selected{% endif %}>Chef de Service Administratif et Financier</option>
+        <option value="Chef de Service des Ressources Humaines" {% if user['fonction'] == 'Chef de Service des Ressources Humaines' %}selected{% endif %}>Chef de Service des Ressources Humaines</option>
+        <option value="Chef de Service Pedagogique" {% if user['fonction'] == 'Chef de Service Pedagogique' %}selected{% endif %}>Chef de Service Pedagogique</option>
+        <option value="Chef de la CISCO" {% if user['fonction'] == 'Chef de la CISCO' %}selected{% endif %}>Chef de la CISCO</option>
+        <option value="Responsable Informatique" {% if user['fonction'] == 'Responsable Informatique' %}selected{% endif %}>Responsable Informatique</option>
+        <option value="Secretaire Administratif" {% if user['fonction'] == 'Secrétaire Administratif' %}selected{% endif %}>Secrétaire Administratif</option>
+        <option value="Agent Administratif" {% if user['fonction'] == 'Agent Administratif' %}selected{% endif %}>Agent Administratif</option>
+    </select><br>
+
+    <button type="submit">Mettre à jour</button>
+</form>
+
+<br><br>
+
+<a href="{{ url_for('main.list_users') }}">Retour à la liste</a>
+{% endblock %}
