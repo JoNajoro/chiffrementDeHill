@@ -1,56 +1,53 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de bord</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        .dashboard-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .dashboard-card {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background-color: #f9f9f9;
-        }
-        .dashboard-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .dashboard-actions a {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        .dashboard-actions a:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div class="dashboard-container">
-        <div class="dashboard-card">
-            <h1>Bienvenue, {{ session['user']['prenoms'] }} {{ session['user']['nom'] }}!</h1>
-            <p><strong>CIN:</strong> {{ session['user']['cin'] }}</p>
-            <p><strong>Email:</strong> {{ session['user']['email'] }}</p>
-            <p><strong>Fonction:</strong> {{ session['user']['fonction'] }}</p>
-            
-            <div class="dashboard-actions">
-                <a href="{{ url_for('main.list_users') }}">Liste des utilisateurs</a>
-                <a href="{{ url_for('message.notifications') }}">Boîte de notifications</a>
-                <a href="{{ url_for('document.request_access') }}">📁 Mes documents</a>
-                <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
-            </div>
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<style>
+    .dashboard-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .dashboard-card {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+    }
+    .dashboard-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    .dashboard-actions a {
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+    .dashboard-actions a:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="dashboard-card">
+        <h1>Bienvenue, {{ session['user']['prenoms'] }} {{ session['user']['nom'] }}!</h1>
+        <p><strong>CIN:</strong> {{ session['user']['cin'] }}</p>
+        <p><strong>Email:</strong> {{ session['user']['email'] }}</p>
+        <p><strong>Fonction:</strong> {{ session['user']['fonction'] }}</p>
+        
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.list_users') }}">Liste des utilisateurs</a>
+            <a href="{{ url_for('message.notifications') }}">Boîte de notifications</a>
+            <a href="{{ url_for('document.request_access') }}">📁 Mes documents</a>
+            <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

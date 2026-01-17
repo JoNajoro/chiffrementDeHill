@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from models.user_model import UserModel
 
 auth_bp = Blueprint('auth', __name__)
@@ -56,3 +56,24 @@ def logout():
     session.pop('user', None)
     flash("Déconnecté.", "success")
     return redirect(url_for('auth.login'))
+
+# Déverrouillage de session
+@auth_bp.route('/unlock', methods=['POST'])
+def unlock():
+    if 'user' not in session:
+        return jsonify({'success': False, 'message': 'Session expirée'}), 401
+
+    data = request.get_json()
+    password = data.get('password')
+
+    if not password:
+        return jsonify({'success': False, 'message': 'Mot de passe requis'}), 400
+
+    # Vérifier le mot de passe de l'utilisateur actuel
+    email = session['user']['email']
+    success, user_or_msg = UserModel.login(email, password)
+
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'message': 'Mot de passe incorrect'}), 401

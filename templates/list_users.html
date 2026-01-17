@@ -1,46 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des utilisateurs</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sympy/1.12.0/sympy.min.js"></script>
-</head>
-<body>
-    <h1>Liste des utilisateurs</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>CIN</th>
-                <th>Nom</th>
-                <th>Prénoms</th>
-                <th>Email</th>
-                <th>Fonction</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            {% if user['email'] != session['user']['email'] %}
-            <tr>
-                <td>{{ user['cin'] }}</td>
-                <td>{{ user['nom'] }}</td>
-                <td>{{ user['prenoms'] }}</td>
-                <td>{{ user['email'] }}</td>
-                <td>{{ user['fonction'] }}</td>
-                <td>
-                    <a href="{{ url_for('main.chat', user_email=user['email']) }}">Discuter</a>
-                    <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" style="margin-left: 10px;">Voir la clé</a>
-                </td>
-            </tr>
-            {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
+{% extends 'base.html' %}
 
-    <br><br>
+{% block title %}Liste des utilisateurs{% endblock %}
 
-    <a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
-    
-</body>
-</html>
+{% block content %}
+<h1>Liste des utilisateurs</h1>
+<table border="1">
+    <thead>
+        <tr>
+            <th>CIN</th>
+            <th>Nom</th>
+            <th>Prénoms</th>
+            <th>Email</th>
+            <th>Fonction</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        {% if user['email'] != session['user']['email'] %}
+        <tr>
+            <td>{{ user['cin'] }}</td>
+            <td>{{ user['nom'] }}</td>
+            <td>{{ user['prenoms'] }}</td>
+            <td>{{ user['email'] }}</td>
+            <td>{{ user['fonction'] }}</td>
+            <td>
+                <a href="{{ url_for('main.chat', user_email=user['email']) }}">Discuter</a>
+                <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" style="margin-left: 10px;">Voir la clé</a>
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<br><br>
+
+<a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+{% endblock %}
