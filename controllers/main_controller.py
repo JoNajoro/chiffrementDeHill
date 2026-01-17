@@ -6,7 +6,7 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     if 'user' not in session:
-        return redirect(url_for('auth.login'))
+        return render_template('home.html')
     return render_template('dashbord.html')
 
 @main_bp.route('/dashboard')

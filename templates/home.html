@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Bienvenue - Application de Chat Sécurisé{% endblock %}
+
+{% block content %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 0;
+        text-align: center;
+    }
+    .hero-section h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+    .hero-section p {
+        font-size: 1.25rem;
+        margin-bottom: 2rem;
+        opacity: 0.9;
+    }
+    .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .btn-primary, .btn-secondary {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    .btn-primary {
+        background: #28a745;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    .btn-secondary {
+        background: #007bff;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
+    .features-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+    .features-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    .features-title {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: #333;
+    }
+    .features-title h2 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    .feature-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    .feature-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+    .feature-card p {
+        color: #666;
+        line-height: 1.6;
+    }
+    .about-section {
+        padding: 80px 0;
+        background: white;
+    }
+    .about-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        text-align: center;
+    }
+    .about-title h2 {
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        color: #333;
+    }
+    .about-content {
+        max-width: 800px;
+        margin: 0 auto;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #666;
+    }
+    @media (max-width: 768px) {
+        .hero-section h1 {
+            font-size: 2rem;
+        }
+        .hero-section p {
+            font-size: 1rem;
+        }
+        .hero-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        .features-title h2 {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<section class="hero-section">
+    <div class="container">
+        <h1>🔐 Application de Chat Sécurisé</h1>
+        <p>Communiquez en toute sécurité avec un chiffrement avancé et une protection maximale de vos données.</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('auth.login') }}" class="btn-primary">Se Connecter</a>
+            <a href="{{ url_for('auth.register') }}" class="btn-secondary">S'Inscrire</a>
+        </div>
+    </div>
+</section>
+
+<section class="features-section">
+    <div class="features-container">
+        <div class="features-title">
+            <h2>Fonctionnalités Clés</h2>
+            <p>Découvrez ce qui rend notre application unique</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Chiffrement Avancé</h3>
+                <p>Utilisation du chiffrement Hill pour sécuriser vos messages avec les dernières technologies cryptographiques.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Session Auto-Verrouillée</h3>
+                <p>Protection automatique après 1 minute d'inactivité pour garantir la sécurité de votre compte.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Chat Multi-Utilisateurs</h3>
+                <p>Communiquez avec plusieurs utilisateurs simultanément dans un environnement sécurisé.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📁</div>
+                <h3>Gestion de Documents</h3>
+                <p>Partagez et gérez vos documents confidentiels avec un contrôle d'accès strict.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h3>Notifications en Temps Réel</h3>
+                <p>Restez informé des nouveaux messages et activités avec notre système de notifications.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>Authentification Sécurisée</h3>
+                <p>Connexion et inscription sécurisées avec vérification des identités.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="about-container">
+        <div class="about-title">
+            <h2>À Propos</h2>
+        </div>
+        <div class="about-content">
+            <p>Notre application de chat sécurisé est conçue pour les professionnels qui ont besoin de communiquer de manière confidentielle. Utilisant des algorithmes de chiffrement avancés comme le chiffrement Hill, nous garantissons que vos conversations restent privées et sécurisées.</p>
+            <p>Que vous soyez dans le secteur bancaire, médical ou gouvernemental, notre plateforme offre la tranquillité d'esprit nécessaire pour vos communications sensibles.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -59,8 +59,9 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.pop('user', None)
+    session.pop('locked', None)
     flash("Déconnecté.", "success")
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('main.index'))
 
 # Verrouiller la session (appelé par le client quand le chrono atteint 00:00)
 @auth_bp.route('/lock', methods=['POST'])
