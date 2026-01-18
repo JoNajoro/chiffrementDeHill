@@ -5,26 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boîte de Notifications</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .notification-box {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 10px;
-            background-color: #f9f9f9;
+            border: 1px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             cursor: default;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
         }
         .notification-box:hover {
-            background-color: #e9e9e9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #ffffff 0%, #f1f3f4 100%);
         }
         .notification-unread {
-            border-left: 4px solid #007bff;
-            background-color: #f0f8ff;
+            border-left: 5px solid #007bff;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+        }
+        .notification-unread::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 8px;
+            height: 8px;
+            background-color: #007bff;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
         }
         .notification-read {
-            border-left: 4px solid #6c757d;
-            background-color: #f8f9fa;
+            border-left: 5px solid #6c757d;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         .notification-sender {
             font-weight: bold;
@@ -204,21 +224,27 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="passwordModalLabel">Vérification de mot de passe</h5>
+                    <h5 class="modal-title" id="passwordModalLabel">
+                        <i class="fas fa-lock mr-2"></i>Vérification de mot de passe
+                    </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Veuillez entrer votre mot de passe pour afficher la clé :</p>
-                    <input type="password" class="form-control" id="passwordInput" placeholder="Mot de passe">
+                    <p class="mb-3">Veuillez entrer votre mot de passe pour afficher la clé :</p>
+                    <input type="password" class="form-control" id="passwordInput" placeholder="Mot de passe" autocomplete="current-password">
                     <div id="passwordError" class="text-danger mt-2" style="display: none;">
-                        Mot de passe incorrect. Veuillez réessayer.
+                        <i class="fas fa-exclamation-triangle mr-1"></i>Mot de passe incorrect. Veuillez réessayer.
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-primary" onclick="verifyPassword()">Vérifier</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Annuler
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="verifyPassword()">
+                        <i class="fas fa-check mr-1"></i>Vérifier
+                    </button>
                 </div>
             </div>
         </div>
@@ -481,6 +507,7 @@
         // Variables globales pour stocker l'état
         let currentNotificationId = null;
         let currentKeyToShow = null;
+        let notificationKeys = {}; // Store keys per notification ID
         
         // Fonction pour récupérer les notifications depuis le backend
         async function fetchNotifications() {
@@ -522,24 +549,51 @@
                 // Utiliser la clé originale si disponible, sinon utiliser la clé hachée
                 const keyToDisplay = notification.original_key || notification.key;
                 const keyLabel = notification.original_key ? "Clé originale" : "Clé hachée";
-                
+
+                // Store the key for this notification
+                notificationKeys[notificationId] = keyToDisplay;
+
+                const readIcon = notification.is_read ? 'fa-envelope-open' : 'fa-envelope';
+                const readText = notification.is_read ? 'Marquer comme non lu' : 'Marquer comme lu';
+                const readBtnClass = notification.is_read ? 'btn-outline-warning' : 'btn-outline-success';
+
                 notificationBox.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <span class="notification-sender">${notification.sender}</span>
-                            vous a envoyé un message avec la ${keyLabel} :
-                            <span class="notification-key-hidden" id="${notificationId}-hidden">********</span>
-                            <span class="notification-key" id="${notificationId}-visible" style="display: none;"></span>
-                            <div class="key-actions">
-                                <button class="btn btn-sm btn-outline-primary toggle-key-btn" data-notification-id="${notificationId}" onclick="event.stopPropagation(); showPasswordModal('${notificationId}', '${keyToDisplay}')">Afficher</button>
-                                <button class="btn btn-sm btn-outline-secondary copy-key-btn" data-notification-id="${notificationId}" data-key="${keyToDisplay}" onclick="event.stopPropagation(); copyKey('${keyToDisplay}')" disabled>Copier</button>
-                                <button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); goToChat('${notification.sender}')">Aller vers la discussion</button>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas ${readIcon} text-primary mr-2"></i>
+                                <span class="notification-sender font-weight-bold">${notification.sender_email}</span>
+                                <span class="text-muted ml-1">vous a envoyé un message</span>
                             </div>
-                            <div class="text-muted small">${notification.timestamp}</div>
-                        </div>
-                        <div>
-                            ${notification.is_read ? '<span class="badge badge-secondary">Lu</span>' : '<span class="badge badge-primary">Nouveau</span>'}
-                            <i class="fas fa-chevron-right text-muted ml-2"></i>
+                            <div class="mb-2">
+                                <span class="text-muted">avec la ${keyLabel} :</span>
+                                <span class="notification-key-hidden font-monospace bg-light px-2 py-1 rounded" id="${notificationId}-hidden">********</span>
+                                <span class="notification-key font-monospace bg-light px-2 py-1 rounded" id="${notificationId}-visible" style="display: none;"></span>
+                            </div>
+                            <div class="key-actions mb-2">
+                                <button class="btn btn-sm btn-outline-primary toggle-key-btn" data-notification-id="${notificationId}" onclick="event.stopPropagation(); showPasswordModal('${notificationId}')">
+                                    <i class="fas fa-eye"></i> <span class="btn-text">Afficher</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary copy-key-btn" data-notification-id="${notificationId}" onclick="event.stopPropagation(); copyKey('${notificationId}')" disabled>
+                                    <i class="fas fa-copy"></i> Copier
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); goToChat('${notification.sender_email}')">
+                                    <i class="fas fa-comments"></i> Discussion
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> ${notification.timestamp}
+                                </small>
+                                <div>
+                                    <button class="btn btn-sm ${readBtnClass} mr-1" onclick="event.stopPropagation(); toggleReadStatus('${notification._id}', ${notification.is_read})">
+                                        <i class="fas ${notification.is_read ? 'fa-envelope' : 'fa-envelope-open'}"></i> ${readText}
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteNotification('${notification._id}')">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -548,9 +602,15 @@
         }
         
         // Fonction pour afficher la modal de mot de passe
-        function showPasswordModal(notificationId, key) {
+        function showPasswordModal(notificationId) {
             currentNotificationId = notificationId;
-            currentKeyToShow = key;
+            currentKeyToShow = notificationKeys[notificationId];
+
+            // Reset the modal
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+            document.getElementById('passwordError').textContent = '';
+
             $('#passwordModal').modal('show');
         }
         
@@ -601,21 +661,28 @@
             const visibleKey = document.getElementById(`${notificationId}-visible`);
             const toggleButton = document.querySelector(`.toggle-key-btn[data-notification-id="${notificationId}"]`);
             const copyButton = document.querySelector(`.copy-key-btn[data-notification-id="${notificationId}"]`);
-            
+
             if (hiddenKey && visibleKey) {
                 hiddenKey.style.display = 'none';
                 visibleKey.style.display = 'inline-block';
                 visibleKey.textContent = key;
-                
+
                 // Changer le bouton en "Masquer"
                 if (toggleButton) {
-                    toggleButton.textContent = 'Masquer';
+                    const btnText = toggleButton.querySelector('.btn-text');
+                    if (btnText) {
+                        btnText.textContent = 'Masquer';
+                    }
+                    const icon = toggleButton.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-eye-slash';
+                    }
                     toggleButton.onclick = function(event) {
                         event.stopPropagation();
                         hideKey(notificationId);
                     };
                 }
-                
+
                 // Activer le bouton Copier
                 if (copyButton) {
                     copyButton.disabled = false;
@@ -629,20 +696,27 @@
             const visibleKey = document.getElementById(`${notificationId}-visible`);
             const toggleButton = document.querySelector(`.toggle-key-btn[data-notification-id="${notificationId}"]`);
             const copyButton = document.querySelector(`.copy-key-btn[data-notification-id="${notificationId}"]`);
-            
+
             if (hiddenKey && visibleKey) {
                 hiddenKey.style.display = 'inline-block';
                 visibleKey.style.display = 'none';
-                
+
                 // Changer le bouton en "Afficher"
                 if (toggleButton) {
-                    toggleButton.textContent = 'Afficher';
+                    const btnText = toggleButton.querySelector('.btn-text');
+                    if (btnText) {
+                        btnText.textContent = 'Afficher';
+                    }
+                    const icon = toggleButton.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-eye';
+                    }
                     toggleButton.onclick = function(event) {
                         event.stopPropagation();
-                        showPasswordModal(notificationId, currentKeyToShow);
+                        showPasswordModal(notificationId);
                     };
                 }
-                
+
                 // Désactiver le bouton Copier
                 if (copyButton) {
                     copyButton.disabled = true;
@@ -661,16 +735,85 @@
         }
         
         // Fonction pour copier la clé dans le presse-papiers
-        function copyKey(key) {
-            navigator.clipboard.writeText(key).then(() => {
-                alert('Clé copiée dans le presse-papiers !');
-            }).catch(err => {
-                console.error('Échec de la copie de la clé: ', err);
-            });
+        function copyKey(notificationId) {
+            const key = notificationKeys[notificationId];
+            if (key) {
+                navigator.clipboard.writeText(key).then(() => {
+                    alert('Clé copiée dans le presse-papiers !');
+                }).catch(err => {
+                    console.error('Échec de la copie de la clé: ', err);
+                });
+            } else {
+                alert('Erreur: Clé non trouvée');
+            }
+        }
+
+        // Fonction pour basculer le statut lu/non lu d'une notification
+        async function toggleReadStatus(notificationId, currentStatus) {
+            try {
+                const response = await fetch(`/toggle_read/${notificationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Recharger les notifications pour mettre à jour l'affichage
+                    displayNotifications();
+                } else {
+                    alert('Erreur lors de la mise à jour de la notification: ' + (data.error || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour du statut:', error);
+                alert('Erreur de connexion lors de la mise à jour');
+            }
+        }
+
+        // Fonction pour supprimer une notification
+        async function deleteNotification(notificationId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/delete/${notificationId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Recharger les notifications pour mettre à jour l'affichage
+                    displayNotifications();
+                } else {
+                    alert('Erreur lors de la suppression de la notification: ' + (data.error || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur lors de la suppression:', error);
+                alert('Erreur de connexion lors de la suppression');
+            }
         }
         
         // Afficher les notifications lorsque la page est chargée
         window.onload = displayNotifications;
+
+        // Add Enter key support for password modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        verifyPassword();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

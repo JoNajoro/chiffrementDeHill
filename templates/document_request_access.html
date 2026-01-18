@@ -5,33 +5,227 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accès Mes Documents</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --border-radius: 15px;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
         .access-container {
-            max-width: 500px;
-            margin: 50px auto;
-            padding: 30px;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
         }
+
         .access-card {
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 30px;
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
         }
+
+        .access-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: #e9ecef;
+            position: relative;
+        }
+
+        .step.completed .step-line {
+            background: var(--success-gradient);
+        }
+
         .access-icon {
-            font-size: 60px;
-            color: #007bff;
+            font-size: 70px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 20px;
+            display: block;
+            text-align: center;
         }
-        .btn-request {
-            width: 100%;
-            padding: 12px;
+
+        .access-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .access-subtitle {
+            color: #718096;
+            text-align: center;
             font-size: 16px;
+            margin-bottom: 30px;
         }
+
+        .btn-request {
+            background: var(--primary-gradient);
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-request:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .process-steps {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .process-steps h5 {
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-content strong {
+            color: #2d3748;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .step-content small {
+            color: #718096;
+        }
+
+        .navigation-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-outline-primary, .btn-link {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            transform: translateY(-1px);
+        }
+
         .info-text {
             color: #666;
             font-size: 14px;
             margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .access-container {
+                margin: 20px auto;
+                padding: 0 15px;
+            }
+
+            .access-card {
+                padding: 30px 20px;
+            }
+
+            .access-title {
+                font-size: 24px;
+            }
+
+            .navigation-links {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
     <!-- Countdown Timer Styles -->
@@ -160,10 +354,28 @@
 
     <div class="access-container">
         <div class="access-card text-center">
-            <div class="access-icon">🔐</div>
-            <h2>Accès à Mes Documents</h2>
-            <p class="lead">Pour accéder à vos documents personnels, vous devez obtenir une clé d'accès sécurisée.</p>
-            
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active">
+                    <div class="step-circle">1</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-circle">2</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-circle">3</div>
+                </div>
+            </div>
+
+            <div class="access-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+
+            <h1 class="access-title">Accès Sécurisé</h1>
+            <p class="access-subtitle">Obtenez votre clé d'accès pour accéder à vos documents personnels</p>
+
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -176,29 +388,46 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            
+
             <form method="POST">
-                <button type="submit" class="btn btn-primary btn-request">
-                    📩 Demander une clé d'accès
+                <button type="submit" class="btn btn-request">
+                    <i class="fas fa-key mr-2"></i>Demander une clé d'accès
                 </button>
             </form>
-            
-            <p class="info-text">
-                <strong>Comment ça marche ?</strong><br>
-                1. Cliquez sur le bouton ci-dessus<br>
-                2. Une clé d'accès sera envoyée dans vos notifications<br>
-                3. Copiez la clé et entrez-la pour accéder à vos documents
-            </p>
-            
-            <hr>
-            
-            <a href="{{ url_for('document.verify_access') }}" class="btn btn-outline-secondary">
-                J'ai déjà une clé d'accès
-            </a>
-            <br><br>
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-link">
-                ← Retour au tableau de bord
-            </a>
+
+            <div class="process-steps">
+                <h5><i class="fas fa-list-check mr-2"></i>Processus d'accès</h5>
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <strong>Demande de clé</strong>
+                        <small>Cliquez sur le bouton pour recevoir une clé d'accès</small>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <strong>Récupération</strong>
+                        <small>Consultez vos notifications pour obtenir la clé</small>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <strong>Accès autorisé</strong>
+                        <small>Entrez la clé pour accéder à vos documents</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navigation-links">
+                <a href="{{ url_for('document.verify_access') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-sign-in-alt mr-2"></i>J'ai déjà une clé
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-link">
+                    <i class="fas fa-arrow-left mr-2"></i>Retour au tableau de bord
+                </a>
+            </div>
         </div>
     </div>
     

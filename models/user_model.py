@@ -42,6 +42,14 @@ class UserModel:
         return False, "Email ou mot de passe incorrect."
 
     @staticmethod
+    def verify_password(email, password):
+        """Vérifie le mot de passe d'un utilisateur."""
+        user = UserModel.collection.find_one({"email": email})
+        if user and check_password_hash(user["password"], password):
+            return True
+        return False
+
+    @staticmethod
     def update_user(email, cin=None, nom=None, prenoms=None, fonction=None, avatar=None):
         update_data = {}
         if cin is not None:

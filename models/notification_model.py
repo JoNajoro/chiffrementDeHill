@@ -52,30 +52,63 @@ class NotificationModel:
                 # Inverser la clé pour afficher la clé originale (la clé est stockée en mode droite-vers-gauche)
                 if "key_used" in notification:
                     notification["original_key"] = notification["key_used"][::-1]
+                # Formater le timestamp pour l'affichage
+                if "timestamp" in notification and hasattr(notification["timestamp"], 'strftime'):
+                    notification["timestamp"] = notification["timestamp"].strftime('%Y-%m-%d %H:%M:%S')
             return notifications
         except Exception as e:
             print(f"Erreur lors de la récupération des notifications: {str(e)}")
             return []
 
     @staticmethod
-    def mark_notification_as_read(notification_id):
+    def toggle_notification_read(notification_id):
         """
-        Marque une notification comme lue.
-        
+        Bascule le statut lu/non lu d'une notification.
+
         Args:
-            notification_id (str): ID de la notification.
-        
+            notification_id (ObjectId): ID de la notification.
+
         Returns:
-            bool: True si la notification a été marquée comme lue, False sinon.
+            bool: True si la notification a été mise à jour, False sinon.
         """
         try:
+            # Récupérer la notification actuelle
+            notification = db.notifications.find_one({"_id": notification_id})
+            if not notification:
+                return False
+
+            # Inverser le statut is_read
+            new_read_status = not notification.get("is_read", False)
+
             db.notifications.update_one(
                 {"_id": notification_id},
-                {"$set": {"is_read": True}}
+                {"$set": {"is_read": new_read_status}}
             )
             return True
         except Exception as e:
             print(f"Erreur lors de la mise à jour de la notification: {str(e)}")
+            return False
+
+    @staticmethod
+    def delete_notification(notification_id, user_email):
+        """
+        Supprime une notification pour un utilisateur spécifique.
+
+        Args:
+            notification_id (str): ID de la notification.
+            user_email (str): Email de l'utilisateur pour vérification.
+
+        Returns:
+            bool: True si la notification a été supprimée, False sinon.
+        """
+        try:
+            result = db.notifications.delete_one({
+                "_id": notification_id,
+                "receiver_email": user_email
+            })
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"Erreur lors de la suppression de la notification: {str(e)}")
             return False
 
     @staticmethod
