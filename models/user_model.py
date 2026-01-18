@@ -36,13 +36,13 @@ class UserModel:
     def login(email, password):
         user = UserModel.collection.find_one({"email": email})
         if user and check_password_hash(user["password"], password):
-            if not user.get("approved", False):
+            if not (user.get("approved", False) or user.get("is_approved", False)):
                 return False, "Votre compte est en attente d'approbation par l'administrateur."
             return True, user
         return False, "Email ou mot de passe incorrect."
 
     @staticmethod
-    def update_user(email, cin=None, nom=None, prenoms=None, fonction=None):
+    def update_user(email, cin=None, nom=None, prenoms=None, fonction=None, avatar=None):
         update_data = {}
         if cin is not None:
             update_data['cin'] = cin
@@ -52,6 +52,8 @@ class UserModel:
             update_data['prenoms'] = prenoms
         if fonction is not None:
             update_data['fonction'] = fonction
+        if avatar is not None:
+            update_data['avatar'] = avatar
         if update_data:
             UserModel.collection.update_one({"email": email}, {"$set": update_data})
             return True, "Utilisateur mis à jour avec succès."
@@ -80,4 +82,10 @@ class UserModel:
 
     @staticmethod
     def get_pending_users():
-        return list(UserModel.collection.find({"approved": {"$ne": True}}))
+        # Users that are not approved (neither 'approved' nor 'is_approved' is True)
+        return list(UserModel.collection.find({
+            "$and": [
+                {"$or": [{"approved": {"$ne": True}}, {"approved": {"$exists": False}}]},
+                {"$or": [{"is_approved": {"$ne": True}}, {"is_approved": {"$exists": False}}]}
+            ]
+        }))

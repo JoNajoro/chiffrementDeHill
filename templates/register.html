@@ -366,9 +366,9 @@
                        required
                        autocomplete="off"
                        placeholder="Votre numéro CIN"
-                       pattern="[0-9]{8}"
-                       maxlength="8"
-                       title="Le CIN doit contenir exactement 8 chiffres">
+                       pattern="[0-9]{12}"
+                       maxlength="12"
+                       title="Le CIN doit contenir exactement 12 chiffres">
             </div>
 
             <div class="form-group">
@@ -522,10 +522,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateForm() {
         let isValid = true;
 
-        // CIN validation (8 digits)
-        const cinRegex = /^[0-9]{8}$/;
+        // CIN validation (12 digits)
+        const cinRegex = /^[0-9]{12}$/;
         if (!cinRegex.test(cinField.value.trim())) {
-            cinField.setCustomValidity('Le CIN doit contenir exactement 8 chiffres');
+            cinField.setCustomValidity('Le CIN doit contenir exactement 12 chiffres');
             isValid = false;
         } else {
             cinField.setCustomValidity('');

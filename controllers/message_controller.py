@@ -401,13 +401,6 @@ def mark_notification_as_read(notification_id):
     try:
         success = NotificationModel.mark_notification_as_read(notification_id)
         if success:
-            # Recalculer le nombre de notifications non lues
-            user_email = session['user']['email']
-            from models.approval_notification_model import ApprovalNotificationModel
-            unread_notifications = NotificationModel.get_unread_count(user_email)
-            unread_approvals = ApprovalNotificationModel.get_unread_count(user_email)
-            total_unread = unread_notifications + unread_approvals
-
             return jsonify({"success": True})
         else:
             return jsonify({"success": False, "error": "Notification non trouvée"})

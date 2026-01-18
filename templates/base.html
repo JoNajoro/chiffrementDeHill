@@ -141,8 +141,7 @@
             <p>
                 Bonjour, {{ session.user.nom }} |
                 <a href="{{ url_for('auth.logout') }}">Déconnexion</a> |
-                <a href="{{ url_for('message.notifications') }}">Notifications</a> |
-                <a href="{{ url_for('main.approval_notifications') }}">Notifications d'approbation</a>
+                <a href="{{ url_for('message.notifications') }}">Notifications</a>
             </p>
         {% endif %}
         <hr>

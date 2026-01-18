@@ -47,7 +47,8 @@ def login():
                 "prenoms": user_or_msg['prenoms'],
                 "email": user_or_msg['email'],
                 "fonction": user_or_msg['fonction'],
-                "is_admin": is_admin
+                "is_admin": is_admin,
+                "approved": user_or_msg.get('approved', False) or user_or_msg.get('is_approved', False)
             }
             flash("Connexion réussie !", "success")
             if is_admin:
@@ -115,11 +116,6 @@ def approve_user(email):
 
     success, msg = UserModel.approve_user(email)
     if success:
-        # Envoyer une notification à l'utilisateur approuvé
-        from models.approval_notification_model import ApprovalNotificationModel
-        admin_email = session['user']['email']
-        message = f"Votre compte a été approuvé par l'administrateur {admin_email}."
-        ApprovalNotificationModel.create_approval_notification(email, admin_email, message)
         return jsonify({'success': True, 'message': msg})
     else:
         return jsonify({'success': False, 'message': msg})
@@ -132,11 +128,6 @@ def reject_user(email):
 
     success, msg = UserModel.reject_user(email)
     if success:
-        # Envoyer une notification de rejet
-        from models.approval_notification_model import ApprovalNotificationModel
-        admin_email = session['user']['email']
-        message = f"Votre demande d'inscription a été rejetée par l'administrateur {admin_email}."
-        ApprovalNotificationModel.create_approval_notification(email, admin_email, message)
         return jsonify({'success': True, 'message': msg})
     else:
         return jsonify({'success': False, 'message': msg})

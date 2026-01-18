@@ -112,6 +112,27 @@
         transform: scale(1.1);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
+    .avatar-save-btn {
+        position: absolute;
+        bottom: -10px;
+        right: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        border: 3px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+    .avatar-save-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
     .avatar-file-input {
         display: none;
     }
@@ -254,6 +275,9 @@
                 📷
             </label>
             <input type="file" id="avatar-file-input" class="avatar-file-input" accept="image/*">
+            <button id="save-avatar-btn" class="avatar-save-btn" title="Enregistrer la photo de profil" style="display: none;">
+                💾
+            </button>
         </div>
     </div>
 
@@ -269,11 +293,11 @@
     </div>
 
     <div class="dashboard-actions">
+        {% if session['user'].get('is_admin') %}
         <a href="{{ url_for('main.list_users') }}">
             <span class="action-icon">👥</span>
             <span>Liste des utilisateurs</span>
         </a>
-        {% if session['user'].get('is_admin') %}
         <a href="{{ url_for('main.pending_users') }}">
             <span class="action-icon">⏳</span>
             <span>Utilisateurs en attente</span>
@@ -292,6 +316,48 @@
             <span>Déconnexion</span>
         </a>
     </div>
+
+    <!-- Section Utilisateurs disponibles pour discuter -->
+    {% if session['user'].get('approved', False) or session['user'].get('is_approved', False) %}
+    <div class="dashboard-info-grid">
+        <div class="info-card" style="grid-column: 1 / -1;">
+            <div class="info-card-label">💬 Utilisateurs disponibles pour discuter</div>
+            <div style="margin-top: 1rem;">
+                {% set available_users = [] %}
+                {% for user in all_users %}
+                {% if (user.get('approved', False) or user.get('is_approved', False)) and user['email'] != session['user']['email'] %}
+                {% set _ = available_users.append(user) %}
+                {% endif %}
+                {% endfor %}
+
+                {% if available_users %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem;">
+                    {% for user in available_users %}
+                    <a href="{{ url_for('main.chat', user_email=user['email']) }}"
+                       style="display: block; padding: 0.75rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; text-align: center; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                        <div style="font-weight: 600;">{{ user['prenoms'] }}</div>
+                        <div style="font-weight: 600;">{{ user['nom'] }}</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">{{ user['fonction'] }}</div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 2rem; color: #64748b;">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+                    <div>Aucun autre utilisateur approuvé disponible pour discuter.</div>
+                    <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                        {% if session['user'].get('is_admin') %}
+                        Allez dans "Utilisateurs en attente" pour approuver de nouveaux comptes.
+                        {% else %}
+                        Contactez un administrateur pour approuver d'autres comptes.
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 
@@ -331,6 +397,8 @@
     }
 
     // Avatar upload functionality
+    let selectedAvatarFile = null;
+
     function handleAvatarUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -347,12 +415,14 @@
             return;
         }
 
+        selectedAvatarFile = file;
+
         // Show preview
         const reader = new FileReader();
         reader.onload = function(e) {
             const avatarImg = document.getElementById('profile-avatar-img');
             const placeholder = document.getElementById('avatar-placeholder');
-            
+
             if (avatarImg) {
                 avatarImg.src = e.target.result;
                 avatarImg.style.display = 'block';
@@ -369,17 +439,23 @@
         };
         reader.readAsDataURL(file);
 
-        // Here you would typically upload to server
-        // For now, we'll just show the preview
-        // You can add an upload function here that sends the file to your backend
+        // Show save button
+        document.getElementById('save-avatar-btn').style.display = 'flex';
         console.log('Avatar file selected:', file.name);
-        
-        // Example: FormData upload (uncomment when backend route is ready)
-        /*
+    }
+
+    function saveAvatar() {
+        if (!selectedAvatarFile) return;
+
         const formData = new FormData();
-        formData.append('avatar', file);
-        
-        fetch('/upload-avatar', {
+        formData.append('avatar', selectedAvatarFile);
+
+        // Disable save button during upload
+        const saveBtn = document.getElementById('save-avatar-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳';
+
+        fetch('/upload_avatar', {
             method: 'POST',
             body: formData
         })
@@ -387,14 +463,24 @@
         .then(data => {
             if (data.success) {
                 // Update avatar URL in session
-                location.reload();
+                alert('Photo de profil mise à jour avec succès!');
+                saveBtn.style.display = 'none';
+                selectedAvatarFile = null;
+                // Reset file input
+                document.getElementById('avatar-file-input').value = '';
+            } else {
+                alert('Erreur: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error uploading avatar:', error);
             alert('Erreur lors du téléchargement de la photo');
+        })
+        .finally(() => {
+            // Re-enable save button
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾';
         });
-        */
     }
 
     // Start dashboard inactivity monitoring with visual countdown
@@ -406,6 +492,12 @@
         const avatarFileInput = document.getElementById('avatar-file-input');
         if (avatarFileInput) {
             avatarFileInput.addEventListener('change', handleAvatarUpload);
+        }
+
+        // Save avatar event listener
+        const saveAvatarBtn = document.getElementById('save-avatar-btn');
+        if (saveAvatarBtn) {
+            saveAvatarBtn.addEventListener('click', saveAvatar);
         }
 
         // Reset timer on dashboard interactions

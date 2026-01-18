@@ -3,57 +3,333 @@
 {% block title %}Liste des utilisateurs{% endblock %}
 
 {% block content %}
-<h1>Liste des utilisateurs</h1>
-<table border="1">
-    <thead>
-        <tr>
-            <th>CIN</th>
-            <th>Nom</th>
-            <th>Prénoms</th>
-            <th>Email</th>
-            <th>Fonction</th>
-            <th>Statut</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        {% if user['email'] != session['user']['email'] %}
-        <tr>
-            <td>{{ user['cin'] }}</td>
-            <td>{{ user['nom'] }}</td>
-            <td>{{ user['prenoms'] }}</td>
-            <td>{{ user['email'] }}</td>
-            <td>{{ user['fonction'] }}</td>
-            <td>
-                {% if user.get('approved', False) %}
-                    Approuvé
-                {% else %}
-                    En attente
-                {% endif %}
-            </td>
-            <td>
-                <a href="{{ url_for('main.chat', user_email=user['email']) }}">Discuter</a>
-                <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" style="margin-left: 10px;">Voir la clé</a>
-                {% if session['user'].get('is_admin') %}
-                {% if not user.get('approved', False) %}
-                <button onclick="approveUser('{{ user['email'] }}')" style="margin-left: 10px;">Approuver</button>
-                <button onclick="rejectUser('{{ user['email'] }}')" style="margin-left: 10px;">Rejeter</button>
-                {% else %}
-                <a href="{{ url_for('main.edit_user', user_email=user['email']) }}" style="margin-left: 10px;">Modifier</a>
-                <a href="{{ url_for('main.delete_user', user_email=user['email']) }}" style="margin-left: 10px;" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</a>
-                {% endif %}
-                {% endif %}
-            </td>
-        </tr>
-        {% endif %}
-        {% endfor %}
-    </tbody>
-</table>
+<style>
+    .users-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 20px;
+    }
+    .users-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    .users-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .users-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    .users-table-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .users-table th {
+        background: linear-gradient(135deg, #f8f9fb 0%, #e2e8f0 100%);
+        color: #2d3748;
+        font-weight: 600;
+        padding: 1.25rem 1rem;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .users-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .users-table tbody tr:hover {
+        background-color: #f8f9fb;
+        transition: background-color 0.3s ease;
+    }
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e2e8f0;
+        margin-right: 1rem;
+    }
+    .user-info {
+        display: flex;
+        align-items: center;
+    }
+    .user-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .user-details small {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-approved {
+        background: linear-gradient(135deg, #00c851 0%, #00a044 100%);
+        color: white;
+    }
+    .status-pending {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        color: white;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        min-width: 80px;
+    }
+    .btn-chat {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .btn-chat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-key {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    .btn-key:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+    }
+    .btn-approve {
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        color: white;
+    }
+    .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    .btn-reject {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    .btn-reject:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    .btn-edit {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    }
+    .btn-delete {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    .current-user-note {
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.9rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+        background: linear-gradient(135deg, #f8f9fb 0%, #e2e8f0 100%);
+    }
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    .back-button {
+        display: inline-block;
+        margin-top: 2rem;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+    .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+    @media (max-width: 768px) {
+        .users-container {
+            padding: 0 15px;
+            margin: 1rem auto;
+        }
+        .users-header {
+            padding: 1.5rem;
+        }
+        .users-header h1 {
+            font-size: 2rem;
+        }
+        .users-table {
+            font-size: 0.85rem;
+        }
+        .users-table th,
+        .users-table td {
+            padding: 0.75rem 0.5rem;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+        }
+        .action-buttons {
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .btn-action {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            min-width: 70px;
+        }
+    }
+</style>
 
-<br><br>
+<div class="users-container">
+    <div class="users-header">
+        <h1>👥 Liste des utilisateurs</h1>
+        <p>Gestion et administration des comptes utilisateur</p>
+    </div>
 
-<a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    <div class="users-table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>CIN</th>
+                    <th>Fonction</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            {% if user.get('avatar') %}
+                                <img src="{{ user['avatar'] }}" alt="Avatar" class="user-avatar">
+                            {% else %}
+                                <div class="user-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold;">
+                                    {{ user['prenoms'][0] }}{{ user['nom'][0] }}
+                                </div>
+                            {% endif %}
+                            <div class="user-details">
+                                <h6>{{ user['prenoms'] }} {{ user['nom'] }}</h6>
+                                <small>{{ user['email'] }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user['cin'] }}</td>
+                    <td>{{ user['fonction'] }}</td>
+                    <td>
+                        {% if user.get('approved', False) or user.get('is_approved', False) %}
+                            <span class="status-badge status-approved">✓ Approuvé</span>
+                        {% else %}
+                            <span class="status-badge status-pending">⏳ En attente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            {% if user['email'] != session['user']['email'] %}
+                                {% if user.get('approved', False) or user.get('is_approved', False) %}
+                                    <a href="{{ url_for('main.chat', user_email=user['email']) }}" class="btn-action btn-chat" title="Discuter avec cet utilisateur">
+                                        💬 Discuter
+                                    </a>
+                                    <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" class="btn-action btn-key" title="Voir la clé de chiffrement">
+                                        🔑 Clé
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="current-user-note">(Votre compte)</span>
+                            {% endif %}
+
+                            {% if session['user'].get('is_admin') %}
+                                {% if not (user.get('approved', False) or user.get('is_approved', False)) %}
+                                    <button onclick="approveUser('{{ user['email'] }}')" class="btn-action btn-approve" title="Approuver cet utilisateur">
+                                        ✓ Approuver
+                                    </button>
+                                    <button onclick="rejectUser('{{ user['email'] }}')" class="btn-action btn-reject" title="Rejeter cet utilisateur">
+                                        ✗ Rejeter
+                                    </button>
+                                {% else %}
+                                    <a href="{{ url_for('main.edit_user', user_email=user['email']) }}" class="btn-action btn-edit" title="Modifier cet utilisateur">
+                                        ✏️ Modifier
+                                    </a>
+                                    {% if user['email'] != session['user']['email'] %}
+                                        <button onclick="deleteUser('{{ user['email'] }}')" class="btn-action btn-delete" title="Supprimer cet utilisateur">
+                                            🗑️ Supprimer
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+
+                {% if users|length == 1 %}
+                <tr>
+                    <td colspan="5" class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <strong>Pour tester la fonctionnalité de chat :</strong><br>
+                        Créez un deuxième compte utilisateur ou contactez un administrateur pour approuver d'autres comptes.<br>
+                        Le bouton "Discuter" apparaîtra alors pour les autres utilisateurs approuvés.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="{{ url_for('main.index') }}" class="back-button">
+            ← Retour au tableau de bord
+        </a>
+    </div>
+</div>
 
 <script>
 function approveUser(email) {
@@ -67,17 +343,21 @@ function approveUser(email) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
+                alert('✅ ' + data.message);
                 location.reload();
             } else {
-                alert(data.message);
+                alert('❌ Erreur: ' + data.message);
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Erreur lors de l\'approbation');
         });
     }
 }
 
 function rejectUser(email) {
-    if (confirm('Êtes-vous sûr de vouloir rejeter cet utilisateur ?')) {
+    if (confirm('Êtes-vous sûr de vouloir rejeter cet utilisateur ? Cette action est irréversible.')) {
         fetch(`/reject_user/${email}`, {
             method: 'POST',
             headers: {
@@ -87,11 +367,39 @@ function rejectUser(email) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert(data.message);
+                alert('✅ ' + data.message);
                 location.reload();
             } else {
-                alert(data.message);
+                alert('❌ Erreur: ' + data.message);
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Erreur lors du rejet');
+        });
+    }
+}
+
+function deleteUser(email) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur ? Cette action est irréversible.')) {
+        fetch(`/delete_user/${email}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                location.reload();
+            } else {
+                alert('❌ Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Erreur lors de la suppression');
         });
     }
 }
