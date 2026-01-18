@@ -1,81 +1,600 @@
 {% extends 'base.html' %}
 
-{% block title %}Discussion{% endblock %}
+{% block title %}Discussion avec {{ user_email }}{% endblock %}
 
 {% block content %}
 <style>
-    #chat-container {
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        padding: 10px;
-        height: 400px;
-        overflow-y: auto;
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --sent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --received-bg: #f1f3f4;
+        --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        --border-radius: 18px;
+        --message-radius: 18px;
+        --transition: all 0.3s ease;
     }
-    .message {
-        margin-bottom: 10px;
-        padding: 8px;
-        border-radius: 5px;
-        background-color: #f1f1f1;
+
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
     }
-    .sent {
-        text-align: right;
-        background-color: #d4edda;
+
+    .chat-wrapper {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+        display: flex;
+        gap: 20px;
+        height: calc(100vh - 100px);
     }
-    .received {
-        text-align: left;
-        background-color: #f8d7da;
+
+    .chat-sidebar {
+        width: 320px;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
     }
-    #message-form {
-        margin-top: 10px;
+
+    .chat-main {
+        flex: 1;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        background: var(--primary-gradient);
+        color: white;
+        padding: 20px;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chat-user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .user-details h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .user-status {
+        font-size: 12px;
+        opacity: 0.8;
+        margin: 0;
+    }
+
+    .chat-actions {
         display: flex;
         gap: 10px;
     }
-    #messageInput {
-        flex-grow: 1;
-        padding: 8px;
+
+    .btn-header {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: var(--transition);
     }
-    button {
-        padding: 8px 15px;
+
+    .btn-header:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-1px);
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #fafbfc;
+    }
+
+    .message {
+        margin-bottom: 16px;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+    }
+
+    .message.sent {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .message-content {
+        max-width: 70%;
+        position: relative;
+    }
+
+    .message.sent .message-content {
+        margin-left: auto;
+    }
+
+    .message-bubble {
+        padding: 12px 16px;
+        border-radius: var(--message-radius);
+        position: relative;
+        word-wrap: break-word;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+
+    .message.sent .message-bubble {
+        background: var(--sent-gradient);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.received .message-bubble {
+        background: white;
+        color: #2d3748;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .message-encrypted {
+        cursor: pointer;
+        border: 1px dashed #667eea;
+        background: linear-gradient(135deg, #f0f4ff 0%, #e8f2ff 100%);
+        transition: var(--transition);
+    }
+
+    .message-encrypted:hover {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-color: #764ba2;
+    }
+
+    .message-file {
+        cursor: pointer;
+        border: 1px solid #e2e8f0;
+        background: #f8f9fa;
+        transition: var(--transition);
+    }
+
+    .message-file:hover {
+        background: #e9ecef;
+        border-color: #667eea;
+    }
+
+    .message-time {
+        font-size: 11px;
+        color: #718096;
+        margin-top: 4px;
+        text-align: right;
+    }
+
+    .message.sent .message-time {
+        text-align: left;
+        color: rgba(255,255,255,0.7);
+    }
+
+    .message-time-top {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 6px;
+        text-align: left;
+        color: #4a5568;
+    }
+
+    .message.sent .message-time-top {
+        text-align: right;
+        color: rgba(255,255,255,0.9);
+    }
+
+    .chat-input-area {
+        border-top: 1px solid #e2e8f0;
+        padding: 20px;
+        background: white;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+
+    .encryption-panel {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .encryption-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .difficulty-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .difficulty-selector label {
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .difficulty-select {
+        padding: 6px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: white;
+        font-size: 14px;
+    }
+
+    .btn-generate {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .btn-generate:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+
+    .message-input-container {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .message-input {
+        flex: 1;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 14px;
+        resize: none;
+        min-height: 44px;
+        max-height: 120px;
+        transition: var(--transition);
+        background: #fafbfc;
+    }
+
+    .message-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .file-input-area {
+        border: 1px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        background: #fafbfc;
+        transition: var(--transition);
+        margin-bottom: 15px;
+    }
+
+    .file-input-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .file-input-label {
+        cursor: pointer;
+        color: #667eea;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-send {
+        background: var(--success-gradient);
+        border: none;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-send:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+    }
+
+    .btn-send-file {
+        background: var(--secondary-gradient);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .btn-send-file:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(240, 147, 251, 0.3);
+    }
+
+    .no-messages {
+        text-align: center;
+        padding: 40px 20px;
+        color: #718096;
+    }
+
+    .no-messages-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px 20px;
+        color: #718096;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e2e8f0;
+        border-radius: 50%;
+        border-top-color: #667eea;
+        animation: spin 1s ease-in-out infinite;
+        margin-bottom: 10px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .sidebar-section {
+        margin-bottom: 20px;
+    }
+
+    .sidebar-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 10px;
+    }
+
+    .sidebar-content {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    @media (max-width: 768px) {
+        .chat-wrapper {
+            flex-direction: column;
+            height: auto;
+            margin: 10px auto;
+        }
+
+        .chat-sidebar {
+            width: 100%;
+            order: 2;
+        }
+
+        .chat-main {
+            order: 1;
+            height: 60vh;
+        }
+
+        .chat-messages {
+            padding: 15px;
+        }
+
+        .message-input-container {
+            flex-direction: column;
+        }
+
+        .encryption-controls {
+            justify-content: center;
+        }
     }
 </style>
 
-<h1>Discussion</h1>
-<div id="chat-container">
-    <!-- Messages will be loaded here -->
-</div>
-<div style="margin-bottom: 15px;">
-    <label for="difficulty">Niveau de difficulté :</label>
-    <select id="difficulty">
-        <option value="5">Facile</option>
-        <option value="15">Moyen</option>
-        <option value="50">Difficile</option>
-    </select>
-    <button type="button" onclick="generateKey()">Générer clé</button>
-</div>
+<div class="chat-wrapper">
+    <!-- Sidebar -->
+    <div class="chat-sidebar">
+        <div class="sidebar-section">
+            <h4 class="sidebar-title">
+                <i class="fas fa-key mr-2"></i>Chiffrement
+            </h4>
+            <div class="sidebar-content">
+                <div class="encryption-controls">
+                    <div class="difficulty-selector">
+                        <label for="difficulty">Difficulté:</label>
+                        <select id="difficulty" class="difficulty-select">
+                            <option value="5">Facile</option>
+                            <option value="15">Moyen</option>
+                            <option value="50">Difficile</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-generate" onclick="generateKey()" id="generateBtn">
+                        <i class="fas fa-magic mr-1"></i>Générer
+                    </button>
+                </div>
+            </div>
+        </div>
 
-<form id="message-form" action="{{ url_for('message.send_message') }}" method="POST">
-    <input type="hidden" name="receiver_email" value="{{ user_email }}">
-    <input type="hidden" name="encryption_key" id="encryptionKey">
-    <textarea name="message_content" placeholder="Écrivez un message..." id="messageInput" required style="width: 100%; min-height: 100px; margin-bottom: 10px; padding: 8px;"></textarea>
-    <button type="submit" style="padding: 8px 15px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Envoyer</button>
-</form>
+        <div class="sidebar-section">
+            <h4 class="sidebar-title">
+                <i class="fas fa-info-circle mr-2"></i>Informations
+            </h4>
+            <div class="sidebar-content">
+                <p class="mb-2"><strong>Chiffrement:</strong> Hill Cipher</p>
+                <p class="mb-2"><strong>Messages:</strong> Chiffrés de bout en bout</p>
+                <p class="mb-0"><strong>Fichiers:</strong> Chiffrés avec Fernet</p>
+            </div>
+        </div>
 
-<form id="file-form" action="{{ url_for('message.send_file') }}" method="POST" enctype="multipart/form-data" style="margin-top: 10px;">
-    <input type="hidden" name="receiver_email" value="{{ user_email }}">
-    <input type="hidden" name="encryption_key" id="fileEncryptionKey">
-    <input type="file" name="file" id="fileInput" required style="margin-bottom: 10px;">
-    <button type="submit" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Envoyer Fichier</button>
-</form>
-<a href="{{ url_for('main.list_users') }}">Retour à la liste des utilisateurs</a>
+        <div class="sidebar-section">
+            <a href="{{ url_for('main.list_users') }}" class="btn btn-outline-primary btn-block">
+                <i class="fas fa-arrow-left mr-2"></i>Liste utilisateurs
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-user-info">
+                <div class="user-avatar">
+                    {{ user_email[0].upper() }}
+                </div>
+                <div class="user-details">
+                    <h3>{{ user_email }}</h3>
+                    <p class="user-status">En ligne</p>
+                </div>
+            </div>
+            <div class="chat-actions">
+                <button class="btn-header" onclick="scrollToBottom()">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button class="btn-header" onclick="clearChat()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chat-container" class="chat-messages">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Chargement des messages...</p>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <!-- File Upload Area -->
+            <div class="file-input-area">
+                <input type="file" id="fileInput" class="file-input">
+                <label for="fileInput" class="file-input-label">
+                    <i class="fas fa-paperclip"></i>
+                    Joindre un fichier
+                </label>
+                <div id="filePreview" class="file-preview" style="display: none;">
+                    <strong>Fichier sélectionné:</strong>
+                    <span id="fileName"></span>
+                    <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="clearFile()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message Form -->
+            <form id="message-form" action="{{ url_for('message.send_message') }}" method="POST" onsubmit="return handleMessageSend(event)">
+                <input type="hidden" name="receiver_email" value="{{ user_email }}">
+                <input type="hidden" name="encryption_key" id="encryptionKey">
+                <div class="message-input-container">
+                    <textarea name="message_content" placeholder="Tapez votre message..." id="messageInput" class="message-input" required></textarea>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button type="submit" class="btn-send">
+                            <i class="fas fa-paper-plane"></i>
+                            <span class="d-none d-md-inline">Envoyer</span>
+                        </button>
+                        <button type="button" class="btn-send-file" onclick="sendFileOnly()" id="sendFileBtn" style="display: none;">
+                            <i class="fas fa-file-upload"></i>
+                            <span class="d-none d-md-inline">Envoyer fichier</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- File Send Form (hidden) -->
+            <form id="file-form" action="{{ url_for('message.send_file') }}" method="POST" enctype="multipart/form-data" style="display: none;">
+                <input type="hidden" name="receiver_email" value="{{ user_email }}">
+                <input type="hidden" name="encryption_key" id="fileEncryptionKey">
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
     // Load messages and files when the page loads
     window.onload = function() {
         loadChatData();
+        setupTextareaAutoResize();
     };
+
+    function setupTextareaAutoResize() {
+        const textarea = document.getElementById('messageInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Handle Enter key (Shift+Enter for new line, Enter to send)
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('message-form').dispatchEvent(new Event('submit'));
+            }
+        });
+    }
     
     function loadChatData() {
         const chatContainer = document.getElementById('chat-container');
@@ -96,67 +615,147 @@
     function renderChat(allItems) {
         const chatContainer = document.getElementById('chat-container');
         chatContainer.innerHTML = '';
-        
+
         if (allItems.length === 0) {
-            chatContainer.innerHTML = '<div style="text-align: center; color: #6c757d;">Aucun message</div>';
+            chatContainer.innerHTML = `
+                <div class="no-messages">
+                    <div class="no-messages-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h4>Aucun message</h4>
+                    <p>Commencez la conversation en envoyant un message chiffré.</p>
+                </div>
+            `;
             return;
         }
-        
+
         // Render all items (already sorted by server)
         allItems.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.classList.add('message');
-            
-            if (item.sender_email === '{{ session["user"]["email"] }}') {
-                itemDiv.classList.add('sent');
-            } else {
-                itemDiv.classList.add('received');
-            }
-            
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+
+            const isSent = item.sender_email === '{{ session["user"]["email"] }}';
+            messageDiv.classList.add(isSent ? 'sent' : 'received');
+
+            // Avatar
+            const avatarDiv = document.createElement('div');
+            avatarDiv.classList.add('message-avatar');
+            avatarDiv.textContent = item.sender_email.charAt(0).toUpperCase();
+
+            // Message content
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('message-content');
+
+            // Timestamp at the top
+            const timeDiv = document.createElement('div');
+            timeDiv.classList.add('message-time', 'message-time-top');
+            timeDiv.textContent = formatTimestamp(item.timestamp);
+            contentDiv.appendChild(timeDiv);
+
             if (item.type === 'message') {
-                let messageHtml = item.message_content;
-                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.classList.add('message-bubble');
+
                 if (item.is_encrypted) {
-                    // Escape the message content for safe use in onclick
+                    bubbleDiv.classList.add('message-encrypted');
                     const escapedContent = item.message_content.replace(/'/g, "\\'").replace(/"/g, '\\"');
-                    messageHtml = `<div class="encrypted-message" onclick="promptDecryption(this, '${escapedContent}')" style="cursor: pointer; color: #007bff; text-decoration: underline;">
-                        🔒 ${item.message_content.substring(0, 50)}...
-                    </div>`;
+                    bubbleDiv.innerHTML = `
+                        <i class="fas fa-lock mr-2"></i>
+                        <strong>Message chiffré:</strong><br>
+                        <code>${item.message_content}</code><br>
+                        <small>Cliquez pour déchiffrer</small>
+                    `;
+                    bubbleDiv.onclick = () => promptDecryption(bubbleDiv, escapedContent);
+                } else {
+                    bubbleDiv.textContent = item.message_content;
                 }
-                
-                itemDiv.innerHTML = `
-                    <div>${messageHtml}</div>
-                    <small style="display: block; margin-top: 5px; color: #6c757d;">${item.timestamp}</small>
-                `;
+
+                contentDiv.appendChild(bubbleDiv);
             } else if (item.type === 'file') {
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.classList.add('message-bubble', 'message-file');
+
                 const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                
-                itemDiv.innerHTML = `
-                    <div id="${fileId}" class="file-message" style="cursor: pointer; color: #007bff; text-decoration: underline;"
-                         onclick="promptFileDecryptionNew('${fileId}', '${item.original_filename}')">
-                        📎 Fichier chiffré: ${item.original_filename}
-                    </div>
-                    <input type="hidden" id="${fileId}_content" value="${item.file_content}">
-                    <small style="display: block; margin-top: 5px; color: #6c757d;">${item.timestamp}</small>
+                bubbleDiv.id = fileId;
+                bubbleDiv.innerHTML = `
+                    <i class="fas fa-file mr-2"></i>
+                    <strong>${item.original_filename}</strong><br>
+                    <small>Fichier chiffré - Cliquez pour télécharger</small>
                 `;
+
+                // Store file content in hidden input
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = fileId + '_content';
+                hiddenInput.value = item.file_content;
+                bubbleDiv.appendChild(hiddenInput);
+
+                bubbleDiv.onclick = () => promptFileDecryptionNew(fileId, item.original_filename);
+                contentDiv.appendChild(bubbleDiv);
             }
-            
-            chatContainer.appendChild(itemDiv);
+
+            // Assemble message
+            if (isSent) {
+                messageDiv.appendChild(contentDiv);
+                messageDiv.appendChild(avatarDiv);
+            } else {
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+            }
+
+            chatContainer.appendChild(messageDiv);
         });
-        
+
+        scrollToBottom();
+    }
+
+    function formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+
+        // Always show full date and time
+        const dateString = date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        const timeString = date.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+
+        return `${dateString} à ${timeString}`;
+    }
+
+    function scrollToBottom() {
+        const chatContainer = document.getElementById('chat-container');
         chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function clearChat() {
+        if (confirm('Voulez-vous vraiment effacer l\'historique de cette conversation ?')) {
+            // This would need a backend endpoint to clear messages
+            alert('Fonctionnalité à implémenter côté serveur');
+        }
     }
     
     function promptDecryption(element, encryptedMessage) {
-        const decryptionKey = prompt('Entrez la clé de déchiffrement:');
-        if (decryptionKey) {
-            decryptMessage(element, encryptedMessage, decryptionKey);
+        const decryptionKey = prompt('Entrez la clé de déchiffrement pour ce message:');
+        if (decryptionKey && decryptionKey.trim()) {
+            decryptMessage(element, encryptedMessage, decryptionKey.trim());
         }
     }
     
     function generateKey() {
         const difficulty = document.getElementById('difficulty').value;
         const receiverEmail = '{{ user_email }}';
+        const generateBtn = document.querySelector('.btn-generate');
+        const originalText = generateBtn.innerHTML;
+
+        // Show loading state
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Génération...';
+        generateBtn.disabled = true;
+
         fetch(`{{ url_for("message.generate_key") }}?size=${difficulty}&receiver_email=${receiverEmail}`)
             .then(response => response.json())
             .then(data => {
@@ -164,17 +763,148 @@
                     const key = data.key;
                     document.getElementById('encryptionKey').value = key;
                     document.getElementById('fileEncryptionKey').value = key;
-                    alert('Clé générée avec succès et prête à être utilisée pour le chiffrement.');
+
+                    // Key generated successfully - it's stored and ready to use
+                    console.log('Key generated successfully:', key);
+
+                    // Success feedback
+                    generateBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Générée!';
+                    generateBtn.style.background = 'var(--success-gradient)';
+                    setTimeout(() => {
+                        generateBtn.innerHTML = originalText;
+                        generateBtn.style.background = '';
+                        generateBtn.disabled = false;
+                    }, 2000);
+
                 } else {
                     alert(`Erreur: ${data.error}`);
+                    generateBtn.innerHTML = originalText;
+                    generateBtn.disabled = false;
                 }
             })
             .catch(error => {
                 alert(`Erreur: ${error}`);
+                generateBtn.innerHTML = originalText;
+                generateBtn.disabled = false;
             });
     }
     
+    function handleMessageSend(event) {
+        event.preventDefault();
+
+        const messageInput = document.getElementById('messageInput');
+        const encryptionKey = document.getElementById('encryptionKey').value;
+        const message = messageInput.value.trim();
+
+        if (!message) return false;
+
+        // Clear input immediately for better UX
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+
+        // Check if we have a file to send
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length > 0) {
+            // Send file with message
+            sendFileWithMessage(message, fileInput.files[0]);
+        } else {
+            // Send text message only
+            sendTextMessage(message);
+        }
+
+        return false;
+    }
+
+    function sendTextMessage(message) {
+        const formData = new FormData();
+        formData.append('receiver_email', '{{ user_email }}');
+        formData.append('message_content', message);
+        formData.append('encryption_key', document.getElementById('encryptionKey').value);
+        formData.append('ajax', 'true'); // Indicate AJAX request
+
+        const sendBtn = document.querySelector('.btn-send');
+        const originalHtml = sendBtn.innerHTML;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        sendBtn.disabled = true;
+
+        fetch('{{ url_for("message.send_message") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.redirected) {
+                // Handle redirect - message was sent successfully
+                loadChatData(); // Refresh messages
+                return;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data) {
+                if (data.success) {
+                    loadChatData(); // Refresh messages
+                } else {
+                    // Restore message if sending failed
+                    document.getElementById('messageInput').value = message;
+                    alert('Erreur lors de l\'envoi du message: ' + (data.error || 'Erreur inconnue'));
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Don't show error alert since message might have been sent
+            loadChatData(); // Try to refresh anyway
+        })
+        .finally(() => {
+            sendBtn.innerHTML = originalHtml;
+            sendBtn.disabled = false;
+        });
+    }
+
+    function sendFileWithMessage(message, file) {
+        const formData = new FormData();
+        formData.append('receiver_email', '{{ user_email }}');
+        formData.append('file', file);
+        formData.append('encryption_key', document.getElementById('encryptionKey').value);
+
+        // Send file first, then message
+        const fileForm = document.getElementById('file-form');
+        const fileFormData = new FormData(fileForm);
+        fileFormData.set('file', file);
+
+        // Add ajax parameter to form data
+        fileFormData.append('ajax', 'true');
+
+        fetch(fileForm.action, {
+            method: 'POST',
+            body: fileFormData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // File sent, now send message
+                return sendTextMessage(message);
+            } else {
+                alert('Erreur lors de l\'envoi du fichier');
+            }
+        })
+        .then(() => {
+            clearFile();
+            loadChatData();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Restore message if sending failed
+            document.getElementById('messageInput').value = message;
+            alert('Erreur lors de l\'envoi du fichier avec message');
+        });
+    }
+
     function decryptMessage(element, encryptedMessage, decryptionKey) {
+        element.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Déchiffrement...';
+        element.style.cursor = 'wait';
+
         fetch('{{ url_for("message.decrypt_message") }}', {
             method: 'POST',
             headers: {
@@ -188,20 +918,85 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Replace the encrypted message with the decrypted content
                 element.innerHTML = data.decrypted_message;
-                element.style.color = '#28a745';
+                element.className = 'message-bubble';
+                element.style.color = '';
                 element.style.textDecoration = 'none';
                 element.style.cursor = 'default';
                 element.onclick = null;
             } else {
-                alert(`Erreur: ${data.error}`);
+                element.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Erreur de déchiffrement';
+                element.style.color = '#dc3545';
             }
         })
         .catch(error => {
-            alert(`Erreur: ${error}`);
+            element.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Erreur de connexion';
+            element.style.color = '#dc3545';
         });
     }
+
+    // File input handling
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const sendFileBtn = document.getElementById('sendFileBtn');
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            document.getElementById('fileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' Ko)';
+            document.getElementById('filePreview').style.display = 'block';
+            sendFileBtn.style.display = 'flex';
+        } else {
+            document.getElementById('filePreview').style.display = 'none';
+            sendFileBtn.style.display = 'none';
+        }
+    });
+
+    function sendFileOnly() {
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput.files.length === 0) {
+            alert('Veuillez sélectionner un fichier d\'abord.');
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('receiver_email', '{{ user_email }}');
+        formData.append('file', file);
+        formData.append('encryption_key', document.getElementById('encryptionKey').value);
+        formData.append('ajax', 'true');
+
+        const sendBtn = document.getElementById('sendFileBtn');
+        const originalHtml = sendBtn.innerHTML;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        sendBtn.disabled = true;
+
+        fetch('{{ url_for("message.send_file") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                clearFile();
+                loadChatData();
+            } else {
+                alert('Erreur lors de l\'envoi du fichier: ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erreur lors de l\'envoi du fichier');
+        })
+        .finally(() => {
+            sendBtn.innerHTML = originalHtml;
+            sendBtn.disabled = false;
+        });
+    }
+
+    function clearFile() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('filePreview').style.display = 'none';
+        document.getElementById('sendFileBtn').style.display = 'none';
+    }
+
     
     function promptFileDecryption(element, fileContent, originalFilename, encryptionKey) {
         const decryptionKey = prompt('Entrez la clé de déchiffrement:');

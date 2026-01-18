@@ -13,13 +13,16 @@ message_bp = Blueprint('message', __name__)
 @message_bp.route('/send_message', methods=['POST'])
 def send_message():
     if 'user' not in session:
+        # Check if it's an AJAX request
+        if request.form.get('ajax') == 'true':
+            return jsonify({"success": False, "error": "Utilisateur non connecté"})
         return redirect(url_for('auth.login'))
-    
+
     receiver_email = request.form['receiver_email']
     message_content = request.form['message_content']
     encryption_key = request.form.get('encryption_key', '')
     sender_email = session['user']['email']
-    
+
     # Use the stored key if no encryption key is provided
     if not encryption_key:
         stored_key = KeyModel.get_key(sender_email, receiver_email)
@@ -28,74 +31,111 @@ def send_message():
             # For now, we will use the stored key directly (assuming it is the correct key)
             encryption_key = stored_key
         else:
-            flash("Clé de chiffrement manquante et aucune clé stockée disponible.", "danger")
+            error_msg = "Clé de chiffrement manquante et aucune clé stockée disponible."
+            if request.form.get('ajax') == 'true':
+                return jsonify({"success": False, "error": error_msg})
+            flash(error_msg, "danger")
             return redirect(url_for('main.chat', user_email=receiver_email))
-    
+
     # Convert the encryption key from base64 to matrix
     try:
         matrice_cle = base64_en_matrice(encryption_key)  # Let the function determine the size
     except Exception as e:
-        flash(f"Erreur lors de la conversion de la clé: {str(e)}", "danger")
+        error_msg = f"Erreur lors de la conversion de la clé: {str(e)}"
+        if request.form.get('ajax') == 'true':
+            return jsonify({"success": False, "error": error_msg})
+        flash(error_msg, "danger")
         return redirect(url_for('main.chat', user_email=receiver_email))
-    
+
     # Encrypt the message using Hill cipher
     try:
         encrypted_message, original_length = hill_chiffrement_ansi_base64(matrice_cle, message_content)
     except Exception as e:
-        flash(f"Erreur lors du chiffrement du message: {str(e)}", "danger")
+        error_msg = f"Erreur lors du chiffrement du message: {str(e)}"
+        if request.form.get('ajax') == 'true':
+            return jsonify({"success": False, "error": error_msg})
+        flash(error_msg, "danger")
         return redirect(url_for('main.chat', user_email=receiver_email))
-    
+
     success, msg = MessageModel.send_message(sender_email, receiver_email, encrypted_message, is_encrypted=True)
-    flash(msg, "success" if success else "danger")
-    
+
     # Create a notification with the real key used
     NotificationModel.create_notification(sender_email, receiver_email, encryption_key)
-    
+
+    # Check if it's an AJAX request
+    if request.form.get('ajax') == 'true':
+        if success:
+            return jsonify({"success": True, "message": "Message envoyé avec succès"})
+        else:
+            return jsonify({"success": False, "error": msg})
+
+    # Regular form submission
+    flash(msg, "success" if success else "danger")
     return redirect(url_for('main.chat', user_email=receiver_email))
 
 @message_bp.route('/send_file', methods=['POST'])
 def send_file():
     if 'user' not in session:
+        # Check if it's an AJAX request
+        if request.form.get('ajax') == 'true':
+            return jsonify({"success": False, "error": "Utilisateur non connecté"})
         return redirect(url_for('auth.login'))
-    
+
     receiver_email = request.form['receiver_email']
     encryption_key = request.form.get('encryption_key', '')
     sender_email = session['user']['email']
-    
+
     # Check if a file was uploaded
     if 'file' not in request.files:
-        flash("Aucun fichier sélectionné.", "danger")
+        error_msg = "Aucun fichier sélectionné."
+        if request.form.get('ajax') == 'true':
+            return jsonify({"success": False, "error": error_msg})
+        flash(error_msg, "danger")
         return redirect(url_for('main.chat', user_email=receiver_email))
-    
+
     file = request.files['file']
     if file.filename == '':
-        flash("Aucun fichier sélectionné.", "danger")
+        error_msg = "Aucun fichier sélectionné."
+        if request.form.get('ajax') == 'true':
+            return jsonify({"success": False, "error": error_msg})
+        flash(error_msg, "danger")
         return redirect(url_for('main.chat', user_email=receiver_email))
-    
+
     # Use the stored key if no encryption key is provided
     if not encryption_key:
         stored_key = KeyModel.get_key(sender_email, receiver_email)
         if stored_key:
             encryption_key = stored_key
         else:
-            flash("Clé de chiffrement manquante et aucune clé stockée disponible.", "danger")
+            error_msg = "Clé de chiffrement manquante et aucune clé stockée disponible."
+            if request.form.get('ajax') == 'true':
+                return jsonify({"success": False, "error": error_msg})
+            flash(error_msg, "danger")
             return redirect(url_for('main.chat', user_email=receiver_email))
-    
+
     # Save the file temporarily to encrypt it
     file_path = f"temp_{file.filename}"
     file.save(file_path)
-    
+
     # Send the file using the FileModel
     success, msg = FileModel.send_file(sender_email, receiver_email, file_path, encryption_key, file.filename)
-    
+
     # Remove the temporary file
     import os
     os.remove(file_path)
-    
+
     if success:
         # Create a notification with the key used for the file
         NotificationModel.create_notification(sender_email, receiver_email, encryption_key)
-    
+
+    # Check if it's an AJAX request
+    if request.form.get('ajax') == 'true':
+        if success:
+            return jsonify({"success": True, "message": "Fichier envoyé avec succès"})
+        else:
+            return jsonify({"success": False, "error": msg})
+
+    # Regular form submission
     flash(msg, "success" if success else "danger")
     return redirect(url_for('main.chat', user_email=receiver_email))
 
