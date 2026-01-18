@@ -738,14 +738,94 @@
         function copyKey(notificationId) {
             const key = notificationKeys[notificationId];
             if (key) {
-                navigator.clipboard.writeText(key).then(() => {
-                    alert('Clé copiée dans le presse-papiers !');
-                }).catch(err => {
-                    console.error('Échec de la copie de la clé: ', err);
-                });
+                // Essayer d'abord l'API moderne du presse-papiers
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(key).then(() => {
+                        alert('Clé copiée dans le presse-papiers !');
+                    }).catch(err => {
+                        console.error('Échec de la copie moderne: ', err);
+                        fallbackCopyTextToClipboard(key);
+                    });
+                } else {
+                    // Utiliser la méthode de fallback pour les contextes non sécurisés
+                    fallbackCopyTextToClipboard(key);
+                }
             } else {
                 alert('Erreur: Clé non trouvée');
             }
+        }
+
+        // Méthode de fallback pour copier du texte (fonctionne dans tous les contextes)
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+
+            // Éviter le défilement vers le bas de la page
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('Clé copiée dans le presse-papiers !');
+                } else {
+                    // Si execCommand échoue, afficher la clé pour copie manuelle
+                    showKeyForManualCopy(text);
+                }
+            } catch (err) {
+                console.error('Échec de la copie de fallback: ', err);
+                showKeyForManualCopy(text);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // Afficher la clé dans une boîte de dialogue pour copie manuelle
+        function showKeyForManualCopy(key) {
+            const modalHtml = `
+                <div class="modal fade" id="copyModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Copier la clé</h5>
+                                <button type="button" class="close" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Sélectionnez et copiez la clé ci-dessous :</p>
+                                <textarea class="form-control" readonly rows="3" style="font-family: monospace;">${key}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Supprimer la modal existante si elle existe
+            const existingModal = document.getElementById('copyModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Ajouter la nouvelle modal
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Afficher la modal
+            $('#copyModal').modal('show');
+
+            // Supprimer la modal du DOM après sa fermeture
+            $('#copyModal').on('hidden.bs.modal', function() {
+                $(this).remove();
+            });
         }
 
         // Fonction pour basculer le statut lu/non lu d'une notification
