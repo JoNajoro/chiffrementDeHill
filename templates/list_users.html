@@ -278,9 +278,7 @@
                                     <a href="{{ url_for('main.chat', user_email=user['email']) }}" class="btn-action btn-chat" title="Discuter avec cet utilisateur">
                                         💬 Discuter
                                     </a>
-                                    <a href="{{ url_for('message.get_stored_key', receiver_email=user['email']) }}" class="btn-action btn-key" title="Voir la clé de chiffrement">
-                                        🔑 Clé
-                                    </a>
+                                    
                                 {% endif %}
                             {% else %}
                                 <span class="current-user-note">(Votre compte)</span>

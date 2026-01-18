@@ -135,15 +135,7 @@
     </div>
     {% endif %}
 
-    <header>
-        <h3>Mon Application de Chat Sécurisé</h3>
-        {% if session.user %}
-            <p>
-                Bonjour, {{ session.user.nom }} |
-                <a href="{{ url_for('auth.logout') }}">Déconnexion</a> |
-                <a href="{{ url_for('message.notifications') }}">Notifications</a>
-            </p>
-        {% endif %}
+    
         <hr>
     </header>
 
