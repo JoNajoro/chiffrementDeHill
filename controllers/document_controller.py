@@ -173,6 +173,8 @@ def logout_documents():
     return redirect(url_for('main.dashboard'))
 
 
+
+
 def create_document_access_notification(user_email, access_key):
     """
     Create a notification for document access with the access key.

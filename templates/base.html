@@ -5,6 +5,127 @@
     <title>{% block title %}Mon App{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            transform: translateX(-250px); /* Hidden by default */
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 5px 0;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-radius: 0 25px 25px 0;
+            margin-right: 10px;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(255,255,255,0.3);
+            font-weight: 600;
+        }
+
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+
+        .sidebar-toggle {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .sidebar-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .main-content {
+            margin-left: 0; /* No margin since sidebar is hidden by default */
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 250px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content.sidebar-open {
+                margin-left: 0; /* On mobile, overlay instead of push */
+            }
+        }
+
         /* Countdown Timer Styles */
         .countdown-timer {
             position: fixed;
@@ -106,6 +227,21 @@
     </style>
 </head>
 <body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/notifications"><i class="fas fa-bell"></i>Boîte de notifications</a></li>
+            <li><a href="{{ url_for('document.request_access') }}"><i class="fas fa-folder"></i>Mes documents</a></li>
+            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
+        </ul>
+    </div>
+
     <!-- Countdown Timer - Visible (only for logged in users and not on auth or home pages) -->
     {% if session.user and request.endpoint not in ['auth.login', 'auth.register', 'main.index'] %}
     <div id="countdown-timer" class="countdown-timer" style="display: flex !important; visibility: visible !important;">
@@ -135,11 +271,7 @@
     </div>
     {% endif %}
 
-    
-        <hr>
-    </header>
-
-    <main>
+    <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -357,6 +489,26 @@
                 }
             });
         }
+
+        // Sidebar toggle function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+
+            if (sidebar.classList.contains('show')) {
+                // Hide sidebar
+                sidebar.classList.remove('show');
+                mainContent.classList.remove('sidebar-open');
+                toggleBtn.innerHTML = '☰'; // Menu icon
+            } else {
+                // Show sidebar
+                sidebar.classList.add('show');
+                mainContent.classList.add('sidebar-open');
+                toggleBtn.innerHTML = '✕'; // Close icon
+            }
+        }
+
 
     </script>
 </body>

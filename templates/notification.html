@@ -577,9 +577,8 @@
                                 <button class="btn btn-sm btn-outline-secondary copy-key-btn" data-notification-id="${notificationId}" onclick="event.stopPropagation(); copyKey('${notificationId}')" disabled>
                                     <i class="fas fa-copy"></i> Copier
                                 </button>
-                                <button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); goToChat('${notification.sender_email}')">
-                                    <i class="fas fa-comments"></i> Discussion
-                                </button>
+                                ${notification.notification_type === 'document_access_key' ? `<button class="btn btn-sm btn-outline-success" onclick="event.stopPropagation(); window.location.href='/mes-documents/verify-access'"><i class="fas fa-key"></i> Vérifier l'accès</button>` : ''}
+                                ${notification.notification_type !== 'document_access_key' ? `<button class="btn btn-sm btn-outline-info" onclick="event.stopPropagation(); goToChat('${notification.sender_email}')"><i class="fas fa-comments"></i> Discussion</button>` : ''}
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
