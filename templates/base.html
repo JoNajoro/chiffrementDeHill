@@ -224,13 +224,168 @@
             color: red;
             margin-top: 10px;
         }
+
+        /* Alert Messages Styles */
+        .alert-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .alert {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border-left: 4px solid;
+            animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .alert-danger {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+
+        .alert-warning {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        }
+
+        .alert-info {
+            border-left-color: #3b82f6;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        }
+
+        .alert-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .alert-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+        }
+
+        .alert-success .alert-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .alert-danger .alert-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .alert-warning .alert-icon {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .alert-info .alert-icon {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .alert-text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .alert-close:hover {
+            background: rgba(0,0,0,0.05);
+            color: #6b7280;
+            transform: scale(1.1);
+        }
+
+        .alert-dismissible .alert-close {
+            position: static;
+            margin-left: auto;
+        }
+
+        /* Auto-hide alerts after 5 seconds */
+        .alert.auto-hide {
+            animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1), fadeOut 0.5s ease 4.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .alert-container {
+                top: 70px;
+                right: 15px;
+                left: 15px;
+                max-width: none;
+            }
+
+            .alert-content {
+                padding: 14px 16px;
+                gap: 10px;
+            }
+
+            .alert-text {
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Sidebar Toggle Button -->
+    <!-- Sidebar Toggle Button - Only for logged in users -->
+    {% if session.user %}
     <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn">☰</button>
 
-    <!-- Sidebar -->
+    <!-- Sidebar - Only for logged in users -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3>Menu</h3>
@@ -238,9 +393,10 @@
         <ul class="sidebar-menu">
             <li><a href="/notifications"><i class="fas fa-bell"></i>Boîte de notifications</a></li>
             <li><a href="{{ url_for('document.request_access') }}"><i class="fas fa-folder"></i>Mes documents</a></li>
-            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i>Déconnexion</a></li>
         </ul>
     </div>
+    {% endif %}
 
     <!-- Countdown Timer - Visible (only for logged in users and not on auth or home pages) -->
     {% if session.user and request.endpoint not in ['auth.login', 'auth.register', 'main.index'] %}
@@ -274,9 +430,31 @@
     <main class="main-content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="{{ category }}">{{ message }}</div>
-                {% endfor %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            <div class="alert-content">
+                                <div class="alert-icon">
+                                    {% if category == 'success' %}
+                                        <i class="fas fa-check-circle"></i>
+                                    {% elif category == 'danger' %}
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    {% elif category == 'warning' %}
+                                        <i class="fas fa-exclamation-circle"></i>
+                                    {% elif category == 'info' %}
+                                        <i class="fas fa-info-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-bell"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="alert-text">{{ message }}</div>
+                            </div>
+                            <button type="button" class="alert-close" data-dismiss="alert" aria-label="Fermer">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
@@ -490,11 +668,13 @@
             });
         }
 
-        // Sidebar toggle function
+        // Sidebar toggle function - Only if sidebar exists (logged in users)
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('.main-content');
             const toggleBtn = document.getElementById('sidebar-toggle-btn');
+
+            if (!sidebar || !toggleBtn) return; // Exit if not logged in
 
             if (sidebar.classList.contains('show')) {
                 // Hide sidebar
@@ -508,6 +688,45 @@
                 toggleBtn.innerHTML = '✕'; // Close icon
             }
         }
+
+        // Enhanced Alert System
+        function initializeAlerts() {
+            // Add auto-hide class to all alerts
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.classList.add('auto-hide');
+
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    if (alert && alert.parentNode) {
+                        alert.style.animation = 'fadeOut 0.5s ease forwards';
+                        setTimeout(() => {
+                            if (alert && alert.parentNode) {
+                                alert.parentNode.removeChild(alert);
+                            }
+                        }, 500);
+                    }
+                }, 5000);
+
+                // Manual close functionality
+                const closeBtn = alert.querySelector('.alert-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        alert.style.animation = 'fadeOut 0.3s ease forwards';
+                        setTimeout(() => {
+                            if (alert && alert.parentNode) {
+                                alert.parentNode.removeChild(alert);
+                            }
+                        }, 300);
+                    });
+                }
+            });
+        }
+
+        // Initialize alerts when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAlerts();
+        });
 
 
     </script>

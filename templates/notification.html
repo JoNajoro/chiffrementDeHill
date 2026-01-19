@@ -82,6 +82,113 @@
             font-size: 12px;
             border-radius: 3px;
         }
+
+        /* Custom Alert Styles */
+        .custom-alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .custom-alert {
+            background: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            border-left: 4px solid;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .custom-alert-success {
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .custom-alert-error {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+
+        .custom-alert-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .custom-alert-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 14px;
+        }
+
+        .custom-alert-success .custom-alert-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .custom-alert-error .custom-alert-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .custom-alert-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .custom-alert-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .custom-alert-close:hover {
+            background: rgba(0,0,0,0.05);
+            color: #6b7280;
+            transform: scale(1.1);
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .custom-alert-container {
+                top: 15px;
+                right: 15px;
+                left: 15px;
+                max-width: none;
+            }
+
+            .custom-alert-content {
+                padding: 14px 16px;
+                gap: 10px;
+            }
+
+            .custom-alert-text {
+                font-size: 13px;
+            }
+        }
     </style>
     <!-- Countdown Timer Styles -->
     <style>
@@ -733,6 +840,48 @@
             console.log(`Redirection vers /chat/${encodedEmail}`); // Pour le débogage
         }
         
+        // Fonction pour afficher des alertes améliorées
+        function showCustomAlert(message, type = 'success') {
+            // Créer l'alerte
+            const alertContainer = document.createElement('div');
+            alertContainer.className = 'custom-alert-container';
+            alertContainer.innerHTML = `
+                <div class="custom-alert custom-alert-${type}">
+                    <div class="custom-alert-content">
+                        <div class="custom-alert-icon">
+                            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                        </div>
+                        <div class="custom-alert-text">${message}</div>
+                        <button class="custom-alert-close" onclick="this.parentElement.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Ajouter au DOM
+            document.body.appendChild(alertContainer);
+
+            // Animation d'entrée
+            setTimeout(() => {
+                alertContainer.querySelector('.custom-alert').style.transform = 'translateX(0)';
+                alertContainer.querySelector('.custom-alert').style.opacity = '1';
+            }, 10);
+
+            // Auto-suppression après 3 secondes
+            setTimeout(() => {
+                if (alertContainer.parentNode) {
+                    alertContainer.querySelector('.custom-alert').style.transform = 'translateX(100%)';
+                    alertContainer.querySelector('.custom-alert').style.opacity = '0';
+                    setTimeout(() => {
+                        if (alertContainer.parentNode) {
+                            alertContainer.parentNode.removeChild(alertContainer);
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+
         // Fonction pour copier la clé dans le presse-papiers
         function copyKey(notificationId) {
             const key = notificationKeys[notificationId];
@@ -740,7 +889,7 @@
                 // Essayer d'abord l'API moderne du presse-papiers
                 if (navigator.clipboard && window.isSecureContext) {
                     navigator.clipboard.writeText(key).then(() => {
-                        alert('Clé copiée dans le presse-papiers !');
+                        showCustomAlert('✅ Clé copiée dans le presse-papiers !', 'success');
                     }).catch(err => {
                         console.error('Échec de la copie moderne: ', err);
                         fallbackCopyTextToClipboard(key);
@@ -750,7 +899,7 @@
                     fallbackCopyTextToClipboard(key);
                 }
             } else {
-                alert('Erreur: Clé non trouvée');
+                showCustomAlert('❌ Erreur: Clé non trouvée', 'error');
             }
         }
 
@@ -772,7 +921,7 @@
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    alert('Clé copiée dans le presse-papiers !');
+                    showCustomAlert('✅ Clé copiée dans le presse-papiers !', 'success');
                 } else {
                     // Si execCommand échoue, afficher la clé pour copie manuelle
                     showKeyForManualCopy(text);
