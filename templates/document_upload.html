@@ -20,19 +20,20 @@
     }
 
     .upload-container {
-        max-width: 700px;
-        margin: 40px auto;
-        padding: 0 20px;
+        max-width: 800px;
+        margin: 30px auto;
+        padding: 0 25px;
     }
 
     .upload-card {
         background: white;
         border: none;
-        border-radius: var(--border-radius);
-        padding: 40px;
-        box-shadow: var(--card-shadow);
+        border-radius: 20px;
+        padding: 50px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.8);
     }
 
     .upload-card::before {
@@ -41,92 +42,108 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
+        height: 6px;
         background: var(--secondary-gradient);
+        border-radius: 20px 20px 0 0;
     }
 
     .upload-header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: 40px;
+        position: relative;
     }
 
     .upload-icon {
-        font-size: 70px;
+        font-size: 80px;
         background: var(--secondary-gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         display: block;
+        filter: drop-shadow(0 4px 8px rgba(240, 147, 251, 0.3));
     }
 
     .upload-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #2d3748;
-        margin-bottom: 10px;
+        font-size: 32px;
+        font-weight: 800;
+        color: #1a202c;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
     }
 
     .upload-subtitle {
         color: #718096;
-        font-size: 16px;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 1.5;
     }
 
     .file-drop-zone {
-        border: 3px dashed #cbd5e0;
-        border-radius: 12px;
-        padding: 40px 30px;
+        border: 3px dashed #d1d5db;
+        border-radius: 16px;
+        padding: 60px 40px;
         text-align: center;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f3f4 100%);
+        background: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%);
         cursor: pointer;
-        transition: var(--transition);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .file-drop-zone:hover {
         border-color: #667eea;
         background: linear-gradient(135deg, #f0f4ff 0%, #e8f2ff 100%);
-        transform: translateY(-2px);
+        transform: translateY(-3px) scale(1.01);
+        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15), inset 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .file-drop-zone.dragover {
         border-color: #667eea;
         background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 16px 48px rgba(102, 126, 234, 0.25), inset 0 1px 3px rgba(0,0,0,0.1);
+        transform: translateY(-2px) scale(1.005);
     }
 
     .drop-icon {
-        font-size: 48px;
-        color: #a0aec0;
-        margin-bottom: 15px;
-        transition: var(--transition);
+        font-size: 56px;
+        color: #9ca3af;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
     }
 
     .file-drop-zone:hover .drop-icon {
         color: #667eea;
-        transform: scale(1.1);
+        transform: scale(1.15) translateY(-2px);
+        filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
     }
 
     .drop-text {
-        font-size: 18px;
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 5px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+        letter-spacing: -0.25px;
     }
 
     .drop-hint {
-        color: #718096;
-        font-size: 14px;
+        color: #6b7280;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.4;
     }
 
     .file-preview {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 25px;
-        border-left: 4px solid #667eea;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 2px solid #e2e8f0;
+        border-left: 5px solid #667eea;
         display: none;
-        animation: slideIn 0.3s ease;
+        animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 
     .file-preview.active {
@@ -134,96 +151,373 @@
     }
 
     @keyframes slideIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(-15px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     .file-info {
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 20px;
+        position: relative;
     }
 
     .file-icon {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         background: var(--primary-gradient);
-        border-radius: 8px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 18px;
+        font-size: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .file-details {
         flex: 1;
+        min-width: 0;
     }
 
     .file-name {
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 3px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 6px;
+        word-break: break-all;
+        font-size: 16px;
+        line-height: 1.4;
     }
 
     .file-size {
-        color: #718096;
+        color: #6b7280;
         font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
     }
 
-    .form-group label {
+    .file-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 0;
+        font-size: 14px;
         font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 8px;
+    }
+
+    .file-status.valid {
+        color: #059669;
+    }
+
+    .file-status.invalid {
+        color: #dc2626;
+    }
+
+    .remove-file {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: scale(0.8);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .file-info:hover .remove-file {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .remove-file:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+    }
+
+    .image-preview {
+        max-width: 120px;
+        max-height: 120px;
+        border-radius: 12px;
+        object-fit: cover;
+        margin-top: 15px;
+        border: 3px solid #e5e7eb;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .image-preview:hover {
+        transform: scale(1.05);
+    }
+
+    .progress-container {
+        margin-top: 25px;
+        display: none;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .progress-container.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--secondary-gradient);
+        width: 0%;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 8px;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .progress-text {
+        text-align: center;
+        font-size: 16px;
+        color: #374151;
+        font-weight: 600;
+        letter-spacing: -0.25px;
+    }
+
+    .file-limits {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 2px solid #3b82f6;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 25px;
+        font-size: 15px;
+        color: #1e40af;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+
+    .file-limits h4 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1d4ed8;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .limits-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .limits-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+    }
+
+    .limits-list i {
+        color: #2563eb;
+        font-size: 14px;
+        background: rgba(37, 99, 235, 0.1);
+        padding: 4px;
+        border-radius: 6px;
+    }
+
+    .error-message {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border: 2px solid #ef4444;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        color: #dc2626;
+        display: none;
+        animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        font-weight: 600;
+    }
+
+    .error-message.active {
         display: block;
     }
 
-    .form-control {
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 12px 16px;
+    .error-message i {
+        margin-right: 10px;
+        font-size: 18px;
+    }
+
+    .form-group {
+        margin-bottom: 30px;
+    }
+
+    .form-group label {
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 12px;
+        display: block;
         font-size: 16px;
-        transition: var(--transition);
+        letter-spacing: -0.25px;
+    }
+
+    .form-group label i {
+        margin-right: 8px;
+        color: #667eea;
+    }
+
+    .form-control {
+        border: 2px solid #d1d5db;
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        line-height: 1.5;
     }
 
     .form-control:focus {
         border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(102, 126, 234, 0.15);
         outline: none;
+        transform: translateY(-1px);
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+        font-weight: 400;
+    }
+
+    .form-text {
+        font-size: 14px;
+        margin-top: 8px;
+        display: block;
+        font-weight: 500;
+    }
+
+    .form-text.text-muted {
+        color: #6b7280 !important;
+    }
+
+    .form-text i {
+        margin-right: 6px;
+        color: #667eea;
     }
 
     .btn-upload {
         background: var(--secondary-gradient);
         border: none;
-        padding: 15px 30px;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 10px;
+        padding: 18px 40px;
+        font-size: 18px;
+        font-weight: 700;
+        border-radius: 14px;
         width: 100%;
-        transition: var(--transition);
-        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-upload::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
     }
 
     .btn-upload:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(240, 147, 251, 0.6);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(240, 147, 251, 0.5);
+    }
+
+    .btn-upload:hover::before {
+        left: 100%;
+    }
+
+    .btn-upload:active {
+        transform: translateY(-1px) scale(1.01);
     }
 
     .navigation-links {
         display: flex;
         justify-content: center;
-        margin-top: 30px;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid #e5e7eb;
     }
 
     .btn-outline-secondary {
-        border-radius: 8px;
-        padding: 10px 20px;
-        font-weight: 500;
-        transition: var(--transition);
+        border: 2px solid #d1d5db;
+        border-radius: 12px;
+        padding: 14px 28px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: #6b7280;
+        background: transparent;
+        font-size: 16px;
     }
 
     .btn-outline-secondary:hover {
-        transform: translateY(-1px);
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2);
+        background: rgba(102, 126, 234, 0.05);
     }
 
     @media (max-width: 768px) {
@@ -273,7 +567,20 @@
                 {% endif %}
             {% endwith %}
 
-            <form method="POST" enctype="multipart/form-data">
+            <div class="file-limits">
+                <h4><i class="fas fa-info-circle"></i> Informations sur les fichiers</h4>
+                <ul class="limits-list">
+                    <li><i class="fas fa-check-circle"></i> Formats acceptés : PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, GIF</li>
+                    <li><i class="fas fa-check-circle"></i> Chiffrement automatique activé</li>
+                </ul>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorText">Erreur de validation du fichier</span>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
                 <label class="file-drop-zone" for="file" id="dropZone">
                     <div class="drop-icon">
                         <i class="fas fa-cloud-upload-alt"></i>
@@ -281,26 +588,44 @@
                     <div class="drop-text">Cliquez pour sélectionner un fichier</div>
                     <div class="drop-hint">ou glissez-déposez votre fichier ici</div>
                 </label>
-                <input type="file" class="d-none" id="file" name="file" required>
+                <input type="file" class="d-none" id="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif" required>
 
                 <div class="file-preview" id="filePreview">
                     <div class="file-info">
-                        <div class="file-icon">
+                        <div class="file-icon" id="fileIcon">
                             <i class="fas fa-file"></i>
                         </div>
                         <div class="file-details">
                             <div class="file-name" id="fileName">Nom du fichier</div>
                             <div class="file-size" id="fileSize">Taille du fichier</div>
+                            <div class="file-status" id="fileStatus">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Fichier valide</span>
+                            </div>
                         </div>
+                        <button type="button" class="remove-file" id="removeFile" title="Supprimer le fichier">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
+                    <img id="imagePreview" class="image-preview" style="display: none;" alt="Aperçu de l'image">
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Téléversement en cours... 0%</div>
                 </div>
 
                 <div class="form-group">
                     <label for="description">
                         <i class="fas fa-sticky-note mr-2"></i>Description (optionnel)
                     </label>
-                    <textarea class="form-control" id="description" name="description" rows="3"
-                              placeholder="Ajoutez une description pour mieux organiser vos documents..."></textarea>
+                    <textarea class="form-control" id="description" name="description" rows="4"
+                              placeholder="Ajoutez une description détaillée pour mieux organiser et retrouver vos documents. Par exemple : 'Contrat de partenariat 2024', 'Rapport annuel Q1', 'Photo identité'..."></textarea>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-lightbulb"></i> Une bonne description vous aidera à retrouver facilement vos documents plus tard.
+                    </small>
                 </div>
 
                 <button type="submit" class="btn btn-upload">
@@ -369,45 +694,224 @@
     </script>
 
     <script>
+        // Configuration
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const ALLOWED_TYPES = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'image/gif'
+        ];
+        const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.jpg', '.jpeg', '.png', '.gif'];
+
+        // DOM Elements
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('file');
         const filePreview = document.getElementById('filePreview');
         const fileName = document.getElementById('fileName');
         const fileSize = document.getElementById('fileSize');
-        
-        // Click on drop zone triggers file input
+        const fileIcon = document.getElementById('fileIcon');
+        const fileStatus = document.getElementById('fileStatus');
+        const imagePreview = document.getElementById('imagePreview');
+        const removeFileBtn = document.getElementById('removeFile');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // File type icons mapping
+        const fileIcons = {
+            'pdf': 'fas fa-file-pdf',
+            'doc': 'fas fa-file-word',
+            'docx': 'fas fa-file-word',
+            'xls': 'fas fa-file-excel',
+            'xlsx': 'fas fa-file-excel',
+            'txt': 'fas fa-file-alt',
+            'jpg': 'fas fa-file-image',
+            'jpeg': 'fas fa-file-image',
+            'png': 'fas fa-file-image',
+            'gif': 'fas fa-file-image',
+            'default': 'fas fa-file'
+        };
+
+        // Utility functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        function getFileIconClass(filename) {
+            const ext = getFileExtension(filename);
+            return fileIcons[ext] || fileIcons.default;
+        }
+
+        function isValidFileType(file) {
+            return ALLOWED_TYPES.includes(file.type) ||
+                   ALLOWED_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
+        }
+
+        function isValidFileSize(file) {
+            return file.size <= MAX_FILE_SIZE;
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.add('active');
+            setTimeout(() => {
+                errorMessage.classList.remove('active');
+            }, 5000);
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('active');
+        }
+
+        function updateFilePreview(file) {
+            hideError();
+
+            // Update file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+
+            // Update file icon
+            const iconClass = getFileIconClass(file.name);
+            fileIcon.innerHTML = `<i class="${iconClass}"></i>`;
+
+            // Validate file
+            const isValidType = isValidFileType(file);
+            const isValidSize = isValidFileSize(file);
+
+            if (!isValidType) {
+                fileStatus.className = 'file-status invalid';
+                fileStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Type de fichier non supporté</span>';
+                showError('Type de fichier non autorisé. Utilisez PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, ou GIF.');
+                return;
+            }
+
+            if (!isValidSize) {
+                fileStatus.className = 'file-status invalid';
+                fileStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Fichier trop volumineux</span>';
+                showError(`Le fichier dépasse la taille maximale de ${formatFileSize(MAX_FILE_SIZE)}.`);
+                return;
+            }
+
+            // File is valid
+            fileStatus.className = 'file-status valid';
+            fileStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Fichier valide</span>';
+
+            // Show image preview for images
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+            }
+
+            filePreview.classList.add('active');
+        }
+
+        function removeFile() {
+            fileInput.value = '';
+            filePreview.classList.remove('active');
+            imagePreview.style.display = 'none';
+            hideError();
+        }
+
+        function simulateUploadProgress(callback) {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(callback, 500);
+                }
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Téléversement en cours... ${Math.round(progress)}%`;
+            }, 200);
+        }
+
+        // Event listeners
         dropZone.addEventListener('click', () => fileInput.click());
-        
-        // File input change handler
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 updateFilePreview(e.target.files[0]);
             }
         });
-        
-        // Drag and drop handlers
+
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('dragover');
         });
-        
+
         dropZone.addEventListener('dragleave', () => {
             dropZone.classList.remove('dragover');
         });
-        
+
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('dragover');
             if (e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
                 fileInput.files = e.dataTransfer.files;
-                updateFilePreview(e.dataTransfer.files[0]);
+                updateFilePreview(file);
             }
         });
-        
-        function updateFilePreview(file) {
-            fileName.textContent = file.name;
-            fileSize.textContent = ` (${(file.size / 1024).toFixed(2)} Ko)`;
-            filePreview.classList.add('active');
-        }
+
+        removeFileBtn.addEventListener('click', removeFile);
+
+        // Form submission with progress
+        uploadForm.addEventListener('submit', (e) => {
+            const file = fileInput.files[0];
+            if (!file) {
+                e.preventDefault();
+                showError('Veuillez sélectionner un fichier.');
+                return;
+            }
+
+            if (!isValidFileType(file) || !isValidFileSize(file)) {
+                e.preventDefault();
+                showError('Le fichier sélectionné n\'est pas valide.');
+                return;
+            }
+
+            // Show progress bar
+            progressContainer.classList.add('active');
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Téléversement en cours... 0%';
+
+            // Simulate progress (in real app, this would be handled by server-sent events or similar)
+            simulateUploadProgress(() => {
+                progressContainer.classList.remove('active');
+            });
+        });
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
     </script>
 {% endblock %}

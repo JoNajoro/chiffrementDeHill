@@ -86,33 +86,68 @@ def upload_document():
     """Upload a new document."""
     if request.method == 'POST':
         user_email = session['user']['email']
-        
+
         if 'file' not in request.files:
             flash("Aucun fichier sélectionné.", "danger")
             return redirect(request.url)
-        
+
         file = request.files['file']
         description = request.form.get('description', '')
-        
+
         if file.filename == '':
             flash("Aucun fichier sélectionné.", "danger")
             return redirect(request.url)
-        
+
         if file:
-            filename = file.filename
+            # Server-side validation
+            MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+            ALLOWED_TYPES = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'text/plain',
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif'
+            ]
+            ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.jpg', '.jpeg', '.png', '.gif']
+
+            # Check file size
             file_content = file.read()
+            if len(file_content) > MAX_FILE_SIZE:
+                flash("Le fichier dépasse la taille maximale autorisée de 10 Mo.", "danger")
+                return redirect(request.url)
+
+            # Check file type
             file_type = file.content_type or 'application/octet-stream'
-            
+            filename = file.filename
+
+            is_valid_type = (
+                file_type in ALLOWED_TYPES or
+                any(filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
+            )
+
+            if not is_valid_type:
+                flash("Type de fichier non autorisé. Utilisez PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, PNG, ou GIF.", "danger")
+                return redirect(request.url)
+
+            # Reset file pointer for upload
+            file.seek(0)
+            file_content = file.read()
+
             success, message, doc_id = DocumentModel.upload_document(
                 user_email, filename, file_content, file_type, description
             )
-            
+
             if success:
                 flash(message, "success")
                 return redirect(url_for('document.list_documents'))
             else:
                 flash(message, "danger")
-    
+
     return render_template('document_upload.html')
 
 
