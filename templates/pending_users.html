@@ -3,39 +3,270 @@
 {% block title %}Utilisateurs en attente{% endblock %}
 
 {% block content %}
-<h2>Utilisateurs en attente d'approbation</h2>
-{% if pending_users %}
-<table border="1">
-    <tr>
-        <th>CIN</th>
-        <th>Nom</th>
-        <th>Prénoms</th>
-        <th>Email</th>
-        <th>Fonction</th>
-        <th>Action</th>
-    </tr>
-    {% for user in pending_users %}
-    <tr>
-        <td>{{ user.cin }}</td>
-        <td>{{ user.nom }}</td>
-        <td>{{ user.prenoms }}</td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.fonction }}</td>
-        <td>
-            <button onclick="approveUser('{{ user.email }}')">Approuver</button>
-            <button onclick="rejectUser('{{ user.email }}')" style="margin-left: 10px;">Rejeter</button>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-{% else %}
-<p>Aucun utilisateur en attente d'approbation.</p>
-{% endif %}
-<a href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+<style>
+.pending-users-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f8f9fa;
+    min-height: 100vh;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #2c3e50;
+}
+
+.page-header h2 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
+
+.page-subtitle {
+    font-size: 1.1em;
+    color: #7f8c8d;
+}
+
+.users-table-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.users-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.users-table th {
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.users-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.users-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 12px;
+    font-size: 16px;
+}
+
+.user-details h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.user-details p {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.btn-approve:hover {
+    background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+}
+
+.btn-reject:hover {
+    background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+}
+
+.btn-back {
+    background: linear-gradient(135deg, #607d8b 0%, #546e7a 100%);
+    color: white;
+    margin-top: 20px;
+}
+
+.btn-back:hover {
+    background: linear-gradient(135deg, #546e7a 0%, #607d8b 100%);
+}
+
+.no-users {
+    text-align: center;
+    padding: 60px 20px;
+    color: #7f8c8d;
+}
+
+.no-users-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.no-users h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+    .pending-users-container {
+        padding: 10px;
+    }
+
+    .users-table {
+        font-size: 12px;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 8px 6px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+</style>
+
+<div class="pending-users-container">
+    <div class="page-header">
+        <h2>👥 Utilisateurs en attente</h2>
+        <p class="page-subtitle">Gérez les demandes d'inscription en attente d'approbation</p>
+    </div>
+
+    {% if pending_users %}
+    <div class="users-table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>CIN</th>
+                    <th>Email</th>
+                    <th>Fonction</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in pending_users %}
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                {{ user.nom[0]|upper }}{{ user.prenoms[0]|upper }}
+                            </div>
+                            <div class="user-details">
+                                <h4>{{ user.nom }} {{ user.prenoms }}</h4>
+                                <p>Utilisateur en attente</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ user.cin }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.fonction }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-approve" onclick="approveUser('{{ user.email }}')">
+                                ✅ Approuver
+                            </button>
+                            <button class="btn btn-reject" onclick="rejectUser('{{ user.email }}')">
+                                🚫 Rejeter
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-users">
+        <div class="no-users-icon">📋</div>
+        <h3>Aucun utilisateur en attente</h3>
+        <p>Tous les utilisateurs ont été traités. Revenez plus tard pour vérifier les nouvelles demandes.</p>
+    </div>
+    {% endif %}
+
+    <div style="text-align: center;">
+        <a href="{{ url_for('main.index') }}" class="btn btn-back">
+            ← Retour au tableau de bord
+        </a>
+    </div>
+</div>
 
 <script>
 function approveUser(email) {
-    if (confirm('Êtes-vous sûr de vouloir approuver cet utilisateur ?')) {
+    if (confirm('Êtes-vous sûr de vouloir changer le statut d\'approbation de cet utilisateur ?')) {
         fetch(`/approve_user/${email}`, {
             method: 'POST',
             headers: {

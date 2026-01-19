@@ -562,7 +562,7 @@
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center mb-2">
                                 <i class="fas ${readIcon} text-primary mr-2"></i>
-                                <span class="notification-sender font-weight-bold">${notification.sender_email}</span>
+                                <span class="notification-sender font-weight-bold">${notification.sender_email === 'system@mapen.app' ? 'Admin' : notification.sender_email}</span>
                                 <span class="text-muted ml-1">vous a envoyé un message</span>
                             </div>
                             <div class="mb-2">

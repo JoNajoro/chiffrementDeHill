@@ -95,6 +95,10 @@
         background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
         color: white;
     }
+    .status-rejected {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
     .action-buttons {
         display: flex;
         gap: 0.5rem;
@@ -265,16 +269,18 @@
                     <td>{{ user['cin'] }}</td>
                     <td>{{ user['fonction'] }}</td>
                     <td>
-                        {% if user.get('approved', False) or user.get('is_approved', False) %}
-                            <span class="status-badge status-approved">✓ Approuvé</span>
+                        {% if user.get('rejected', False) %}
+                            <button type="button" class="status-badge status-rejected" onclick="approveUser('{{ user.email }}')" title="Cliquez pour réapprouver" style="border: none; cursor: pointer;">✗ Rejeté</button>
+                        {% elif user.get('approved', False) or user.get('is_approved', False) %}
+                            <button type="button" class="status-badge status-approved" onclick="rejectUser('{{ user.email }}')" title="Cliquez pour rejeter" style="border: none; cursor: pointer;">✓ Approuvé</button>
                         {% else %}
-                            <span class="status-badge status-pending">⏳ En attente</span>
+                            <button type="button" class="status-badge status-pending" onclick="approveUser('{{ user.email }}')" title="Cliquez pour approuver" style="border: none; cursor: pointer;">⏳ En attente</button>
                         {% endif %}
                     </td>
                     <td>
                         <div class="action-buttons">
                             {% if user['email'] != session['user']['email'] %}
-                                {% if user.get('approved', False) or user.get('is_approved', False) %}
+                                {% if (user.get('approved', False) or user.get('is_approved', False)) and not user.get('rejected', False) %}
                                     <a href="{{ url_for('main.chat', user_email=user['email']) }}" class="btn-action btn-chat" title="Discuter avec cet utilisateur">
                                         💬 Discuter
                                     </a>
@@ -285,22 +291,13 @@
                             {% endif %}
 
                             {% if session['user'].get('is_admin') %}
-                                {% if not (user.get('approved', False) or user.get('is_approved', False)) %}
-                                    <button onclick="approveUser('{{ user['email'] }}')" class="btn-action btn-approve" title="Approuver cet utilisateur">
-                                        ✓ Approuver
+                                <a href="{{ url_for('main.edit_user', user_email=user['email']) }}" class="btn-action btn-edit" title="Modifier cet utilisateur">
+                                    ✏️ Modifier
+                                </a>
+                                {% if user['email'] != session['user']['email'] %}
+                                    <button onclick="deleteUser('{{ user['email'] }}')" class="btn-action btn-delete" title="Supprimer cet utilisateur">
+                                        🗑️ Supprimer
                                     </button>
-                                    <button onclick="rejectUser('{{ user['email'] }}')" class="btn-action btn-reject" title="Rejeter cet utilisateur">
-                                        ✗ Rejeter
-                                    </button>
-                                {% else %}
-                                    <a href="{{ url_for('main.edit_user', user_email=user['email']) }}" class="btn-action btn-edit" title="Modifier cet utilisateur">
-                                        ✏️ Modifier
-                                    </a>
-                                    {% if user['email'] != session['user']['email'] %}
-                                        <button onclick="deleteUser('{{ user['email'] }}')" class="btn-action btn-delete" title="Supprimer cet utilisateur">
-                                            🗑️ Supprimer
-                                        </button>
-                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -401,5 +398,6 @@ function deleteUser(email) {
         });
     }
 }
+
 </script>
 {% endblock %}

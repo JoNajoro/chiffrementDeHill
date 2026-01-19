@@ -76,17 +76,27 @@ class UserModel:
 
     @staticmethod
     def approve_user(email):
-        result = UserModel.collection.update_one({"email": email}, {"$set": {"approved": True}})
+        user = UserModel.collection.find_one({"email": email})
+        if not user:
+            return False, "Utilisateur non trouvé."
+
+        current_status = user.get("approved", False)
+        new_status = not current_status
+        if new_status:  # approving
+            result = UserModel.collection.update_one({"email": email}, {"$set": {"approved": True, "rejected": False}})
+        else:  # unapproving
+            result = UserModel.collection.update_one({"email": email}, {"$set": {"approved": False}})
         if result.modified_count > 0:
-            return True, "Utilisateur approuvé avec succès."
-        return False, "Utilisateur non trouvé ou déjà approuvé."
+            action = "approuvé" if new_status else "désapprouvé"
+            return True, f"Utilisateur {action} avec succès."
+        return False, "Erreur lors de la mise à jour."
 
     @staticmethod
     def reject_user(email):
-        result = UserModel.collection.delete_one({"email": email})
-        if result.deleted_count > 0:
-            return True, "Utilisateur rejeté et supprimé avec succès."
-        return False, "Utilisateur non trouvé."
+        result = UserModel.collection.update_one({"email": email}, {"$set": {"rejected": True}})
+        if result.modified_count > 0:
+            return True, "Utilisateur rejeté avec succès."
+        return False, "Utilisateur non trouvé ou déjà rejeté."
 
     @staticmethod
     def get_pending_users():
