@@ -3,34 +3,445 @@
 {% block title %}Modifier l'utilisateur{% endblock %}
 
 {% block content %}
-<h1>Modifier l'utilisateur</h1>
-<form method="post">
-    <label for="cin">CIN:</label>
-    <input type="text" name="cin" value="{{ user['cin'] }}" required><br>
+<style>
+.edit-user-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 20px;
+}
 
-    <label for="nom">Nom:</label>
-    <input type="text" name="nom" value="{{ user['nom'] }}" required><br>
+.edit-user-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
 
-    <label for="prenoms">Prénoms:</label>
-    <input type="text" name="prenoms" value="{{ user['prenoms'] }}" required><br>
+.edit-user-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
 
-    <label for="fonction">Fonction:</label>
-    <select name="fonction" required>
-        <option value="Directeur" {% if user['fonction'] == 'Directeur' %}selected{% endif %}>Directeur</option>
-        <option value="Directeur Adjoint" {% if user['fonction'] == 'Directeur Adjoint' %}selected{% endif %}>Directeur Adjoint</option>
-        <option value="Chef de Service Administratif et Financier" {% if user['fonction'] == 'Chef de Service Administratif et Financier' %}selected{% endif %}>Chef de Service Administratif et Financier</option>
-        <option value="Chef de Service des Ressources Humaines" {% if user['fonction'] == 'Chef de Service des Ressources Humaines' %}selected{% endif %}>Chef de Service des Ressources Humaines</option>
-        <option value="Chef de Service Pedagogique" {% if user['fonction'] == 'Chef de Service Pedagogique' %}selected{% endif %}>Chef de Service Pedagogique</option>
-        <option value="Chef de la CISCO" {% if user['fonction'] == 'Chef de la CISCO' %}selected{% endif %}>Chef de la CISCO</option>
-        <option value="Responsable Informatique" {% if user['fonction'] == 'Responsable Informatique' %}selected{% endif %}>Responsable Informatique</option>
-        <option value="Secretaire Administratif" {% if user['fonction'] == 'Secrétaire Administratif' %}selected{% endif %}>Secrétaire Administratif</option>
-        <option value="Agent Administratif" {% if user['fonction'] == 'Agent Administratif' %}selected{% endif %}>Agent Administratif</option>
-    </select><br>
+.edit-user-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
 
-    <button type="submit">Mettre à jour</button>
-</form>
+.edit-user-body {
+    padding: 2rem;
+}
 
-<br><br>
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
 
-<a href="{{ url_for('main.list_users') }}">Retour à la liste</a>
+.form-section h3 {
+    margin: 0 0 1rem 0;
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-section h3::before {
+    content: "📝";
+    font-size: 1.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-label::before {
+    content: "•";
+    color: #667eea;
+    font-size: 1.2rem;
+}
+
+.form-input, .form-select, .form-textarea {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-select {
+    cursor: pointer;
+}
+
+.status-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #0ea5e9;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.status-section h3::before {
+    content: "⚙️";
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.status-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.status-label {
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    user-select: none;
+}
+
+.status-approved .status-label {
+    color: #10b981;
+}
+
+.status-rejected .status-label {
+    color: #ef4444;
+}
+
+.user-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-approved-badge {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-rejected-badge {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-pending-badge {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding-top: 2rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-1px);
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.back-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .edit-user-container {
+        padding: 0 15px;
+    }
+
+    .edit-user-header, .edit-user-body {
+        padding: 1.5rem;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+
+<div class="edit-user-container">
+    <div class="edit-user-card">
+        <div class="edit-user-header">
+            <h1>Modifier l'utilisateur</h1>
+            <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">{{ user['email'] }}</p>
+        </div>
+
+        <div class="edit-user-body">
+            <!-- Current Status Display -->
+            <div class="status-section">
+                <h3>Statut actuel</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="user-status-badge
+                            {% if user.get('approved', False) %}status-approved-badge
+                            {% elif user.get('rejected', False) %}status-rejected-badge
+                            {% else %}status-pending-badge{% endif %}">
+                            {% if user.get('approved', False) %}
+                                ✅ Approuvé
+                            {% elif user.get('rejected', False) %}
+                                ❌ Rejeté
+                            {% else %}
+                                ⏳ En attente
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post">
+                <!-- Personal Information -->
+                <div class="form-section">
+                    <h3>Informations personnelles</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="cin">CIN</label>
+                            <input type="text" id="cin" name="cin" class="form-input"
+                                   value="{{ user['cin'] }}" required
+                                   pattern="\d{12}" title="Le CIN doit contenir exactement 12 chiffres">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" name="email" class="form-input"
+                                   value="{{ user['email'] }}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="nom">Nom</label>
+                            <input type="text" id="nom" name="nom" class="form-input"
+                                   value="{{ user['nom'] }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="prenoms">Prénoms</label>
+                            <input type="text" id="prenoms" name="prenoms" class="form-input"
+                                   value="{{ user['prenoms'] }}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label class="form-label" for="fonction">Fonction</label>
+                            <select id="fonction" name="fonction" class="form-select" required>
+                                <option value="Directeur" {% if user['fonction'] == 'Directeur' %}selected{% endif %}>Directeur</option>
+                                <option value="Directeur Adjoint" {% if user['fonction'] == 'Directeur Adjoint' %}selected{% endif %}>Directeur Adjoint</option>
+                                <option value="Chef de Service Administratif et Financier" {% if user['fonction'] == 'Chef de Service Administratif et Financier' %}selected{% endif %}>Chef de Service Administratif et Financier</option>
+                                <option value="Chef de Service des Ressources Humaines" {% if user['fonction'] == 'Chef de Service des Ressources Humaines' %}selected{% endif %}>Chef de Service des Ressources Humaines</option>
+                                <option value="Chef de Service Pedagogique" {% if user['fonction'] == 'Chef de Service Pedagogique' %}selected{% endif %}>Chef de Service Pedagogique</option>
+                                <option value="Chef de la CISCO" {% if user['fonction'] == 'Chef de la CISCO' %}selected{% endif %}>Chef de la CISCO</option>
+                                <option value="Responsable Informatique" {% if user['fonction'] == 'Responsable Informatique' %}selected{% endif %}>Responsable Informatique</option>
+                                <option value="Secretaire Administratif" {% if user['fonction'] == 'Secrétaire Administratif' %}selected{% endif %}>Secrétaire Administratif</option>
+                                <option value="Agent Administratif" {% if user['fonction'] == 'Agent Administratif' %}selected{% endif %}>Agent Administratif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Status -->
+                <div class="form-section">
+                    <h3>Statut du compte</h3>
+                    <div class="status-grid">
+                        <div class="status-item status-approved">
+                            <input type="checkbox" id="approved" name="approved" class="status-checkbox"
+                                   {% if user.get('approved', False) %}checked{% endif %}>
+                            <label for="approved" class="status-label">Approuver l'utilisateur</label>
+                        </div>
+                        <div class="status-item status-rejected">
+                            <input type="checkbox" id="rejected" name="rejected" class="status-checkbox"
+                                   {% if user.get('rejected', False) %}checked{% endif %}>
+                            <label for="rejected" class="status-label">Rejeter l'utilisateur</label>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.875rem; color: #6b7280; margin-top: 1rem;">
+                        <strong>Note:</strong> Approuver et rejeter sont mutuellement exclusifs. Si vous approuvez un utilisateur rejeté, le rejet sera automatiquement retiré.
+                    </p>
+                </div>
+
+                <!-- Password Reset -->
+                <div class="form-section">
+                    <h3>Réinitialisation du mot de passe</h3>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label class="form-label" for="password">Nouveau mot de passe (optionnel)</label>
+                            <input type="password" id="password" name="password" class="form-input"
+                                   placeholder="Laisser vide pour ne pas changer">
+                            <small style="color: #6b7280; margin-top: 0.25rem; display: block;">
+                                Laissez ce champ vide si vous ne souhaitez pas changer le mot de passe.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span> Mettre à jour l'utilisateur
+                    </button>
+                    <a href="{{ url_for('main.list_users') }}" class="btn btn-secondary">
+                        <span>⬅️</span> Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="{{ url_for('main.list_users') }}">
+            <span>←</span> Retour à la liste des utilisateurs
+        </a>
+    </div>
+</div>
+
+<script>
+// Form validation and enhancements
+document.addEventListener('DOMContentLoaded', function() {
+    const approvedCheckbox = document.getElementById('approved');
+    const rejectedCheckbox = document.getElementById('rejected');
+
+    // Make approval and rejection mutually exclusive
+    approvedCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            rejectedCheckbox.checked = false;
+        }
+    });
+
+    rejectedCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            approvedCheckbox.checked = false;
+        }
+    });
+
+    // CIN validation
+    const cinInput = document.getElementById('cin');
+    cinInput.addEventListener('input', function() {
+        // Remove any non-digit characters
+        this.value = this.value.replace(/\D/g, '');
+        // Limit to 12 digits
+        if (this.value.length > 12) {
+            this.value = this.value.slice(0, 12);
+        }
+    });
+
+    // Email validation
+    const emailInput = document.getElementById('email');
+    emailInput.addEventListener('blur', function() {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (this.value && !emailRegex.test(this.value)) {
+            this.style.borderColor = '#ef4444';
+            alert('Veuillez entrer une adresse email valide.');
+        } else {
+            this.style.borderColor = '#e2e8f0';
+        }
+    });
+});
+</script>
 {% endblock %}

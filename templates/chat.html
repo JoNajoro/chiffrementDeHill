@@ -170,10 +170,11 @@
     }
 
     .message.received .message-bubble {
-        background: white;
+        background: #f7f7f7;
         color: #2d3748;
         border-bottom-left-radius: 4px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
     }
 
     .message-encrypted {
@@ -202,27 +203,22 @@
 
     .message-time {
         font-size: 11px;
-        color: #718096;
+        color: #000000;
         margin-top: 4px;
         text-align: right;
+        font-weight: 600;
+        background: rgba(0,0,0,0.05);
+        padding: 2px 6px;
+        border-radius: 8px;
+        display: inline-block;
+        margin-top: 6px;
     }
 
     .message.sent .message-time {
         text-align: left;
-        color: rgba(255,255,255,0.7);
-    }
-
-    .message-time-top {
-        font-size: 12px;
-        font-weight: 500;
-        margin-bottom: 6px;
-        text-align: left;
-        color: #4a5568;
-    }
-
-    .message.sent .message-time-top {
-        text-align: right;
-        color: rgba(255,255,255,0.9);
+        color: #ffffff;
+        background: rgba(0,0,0,0.3);
+        font-weight: 600;
     }
 
     .chat-input-area {
@@ -642,12 +638,6 @@
             const contentDiv = document.createElement('div');
             contentDiv.classList.add('message-content');
 
-            // Timestamp at the top
-            const timeDiv = document.createElement('div');
-            timeDiv.classList.add('message-time', 'message-time-top');
-            timeDiv.textContent = formatTimestamp(item.timestamp);
-            contentDiv.appendChild(timeDiv);
-
             if (item.type === 'message') {
                 const bubbleDiv = document.createElement('div');
                 bubbleDiv.classList.add('message-bubble');
@@ -667,6 +657,12 @@
                 }
 
                 contentDiv.appendChild(bubbleDiv);
+
+                // Timestamp at the bottom
+                const timeDiv = document.createElement('div');
+                timeDiv.classList.add('message-time');
+                timeDiv.textContent = formatTimestamp(item.timestamp);
+                contentDiv.appendChild(timeDiv);
             } else if (item.type === 'file') {
                 const bubbleDiv = document.createElement('div');
                 bubbleDiv.classList.add('message-bubble', 'message-file');
@@ -688,6 +684,12 @@
 
                 bubbleDiv.onclick = () => promptFileDecryptionNew(fileId, item.original_filename);
                 contentDiv.appendChild(bubbleDiv);
+
+                // Timestamp at the bottom for files too
+                const timeDiv = document.createElement('div');
+                timeDiv.classList.add('message-time');
+                timeDiv.textContent = formatTimestamp(item.timestamp);
+                contentDiv.appendChild(timeDiv);
             }
 
             // Assemble message

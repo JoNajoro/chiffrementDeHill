@@ -36,6 +36,8 @@ class UserModel:
     def login(email, password):
         user = UserModel.collection.find_one({"email": email})
         if user and check_password_hash(user["password"], password):
+            if user.get("rejected", False):
+                return False, "Votre compte a été rejeté. Vous n'avez pas accès."
             if not (user.get("approved", False) or user.get("is_approved", False)):
                 return False, "Votre compte est en attente d'approbation par l'administrateur."
             return True, user
@@ -50,7 +52,7 @@ class UserModel:
         return False
 
     @staticmethod
-    def update_user(email, cin=None, nom=None, prenoms=None, fonction=None, avatar=None):
+    def update_user(email, cin=None, nom=None, prenoms=None, fonction=None, avatar=None, approved=None, rejected=None):
         update_data = {}
         if cin is not None:
             update_data['cin'] = cin
@@ -62,6 +64,14 @@ class UserModel:
             update_data['fonction'] = fonction
         if avatar is not None:
             update_data['avatar'] = avatar
+        if approved is not None:
+            update_data['approved'] = approved
+            if approved:
+                update_data['rejected'] = False  # If approving, remove rejection
+        if rejected is not None:
+            update_data['rejected'] = rejected
+            if rejected:
+                update_data['approved'] = False  # If rejecting, remove approval
         if update_data:
             UserModel.collection.update_one({"email": email}, {"$set": update_data})
             return True, "Utilisateur mis à jour avec succès."

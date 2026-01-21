@@ -48,7 +48,8 @@ def login():
                 "email": user_or_msg['email'],
                 "fonction": user_or_msg['fonction'],
                 "is_admin": is_admin,
-                "approved": user_or_msg.get('approved', False) or user_or_msg.get('is_approved', False)
+                "approved": user_or_msg.get('approved', False) or user_or_msg.get('is_approved', False),
+                "rejected": user_or_msg.get('rejected', False)
             }
             flash("Connexion réussie !", "success")
             if is_admin:
